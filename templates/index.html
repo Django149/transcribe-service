@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" href="{{ url_for('static', path='favicon.png') }}" />
-    <title>תמלול בעזרת ivrit.ai</title>
+    <title>תמלול</title>
     <script src="https://cdn.jsdelivr.net/npm/html-docx-js/dist/html-docx.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
@@ -66,60 +66,6 @@
         width: 24px;
         height: 24px;
         color: #666;
-      }
-      .lang-menu {
-        position: absolute;
-        top: 1rem;
-        left: 3.5rem;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.25rem;
-      }
-      .lang-menu button {
-        background: none;
-        border: 1px solid var(--border-color);
-        cursor: pointer;
-        padding: 0.45rem;
-        border-radius: 50%;
-        width: 36px;
-        height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      .lang-menu .dropdown {
-        position: relative;
-        display: inline-block;
-      }
-      .lang-menu .dropdown-content {
-        display: none;
-        position: absolute;
-        top: 100%;
-        left: 0;
-        background: var(--container-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        padding: 0.25rem 0;
-        min-width: 120px;
-        z-index: 200;
-      }
-      .lang-menu .dropdown:hover .dropdown-content {
-        display: block;
-      }
-      .lang-menu .dropdown-content button {
-        display: block;
-        width: 100%;
-        background: none;
-        border: none;
-        text-align: right;
-        padding: 0.4rem 0.75rem;
-        cursor: pointer;
-        color: var(--text-color);
-      }
-      .lang-menu .dropdown-content button:hover {
-        background: var(--secondary-color);
-        color: var(--primary-color);
       }
       .theme-toggle {
         position: absolute;
@@ -579,27 +525,67 @@
       .speaker {
         font-weight: bold;
       }
-      .speaker-1 { color: #2196F3; } /* Blue */
-      .speaker-2 { color: #4CAF50; } /* Green */
-      .speaker-3 { color: #FF9800; } /* Orange */
-      .speaker-4 { color: #E91E63; } /* Pink */
-      .speaker-5 { color: #9C27B0; } /* Purple */
-      .speaker-6 { color: #F44336; } /* Red */
-      .speaker-7 { color: #00BCD4; } /* Cyan */
-      .speaker-8 { color: #8BC34A; } /* Light Green */
-      .speaker-9 { color: #FFC107; } /* Amber */
-      .speaker-10 { color: #607D8B; } /* Blue Grey */
+      .speaker-1 {
+        color: #2196f3;
+      } /* Blue */
+      .speaker-2 {
+        color: #4caf50;
+      } /* Green */
+      .speaker-3 {
+        color: #ff9800;
+      } /* Orange */
+      .speaker-4 {
+        color: #e91e63;
+      } /* Pink */
+      .speaker-5 {
+        color: #9c27b0;
+      } /* Purple */
+      .speaker-6 {
+        color: #f44336;
+      } /* Red */
+      .speaker-7 {
+        color: #00bcd4;
+      } /* Cyan */
+      .speaker-8 {
+        color: #8bc34a;
+      } /* Light Green */
+      .speaker-9 {
+        color: #ffc107;
+      } /* Amber */
+      .speaker-10 {
+        color: #607d8b;
+      } /* Blue Grey */
       /* Dark theme speaker colors */
-      [data-theme="dark"] .speaker-1 { color: #64B5F6; }
-      [data-theme="dark"] .speaker-2 { color: #81C784; }
-      [data-theme="dark"] .speaker-3 { color: #FFB74D; }
-      [data-theme="dark"] .speaker-4 { color: #F06292; }
-      [data-theme="dark"] .speaker-5 { color: #BA68C8; }
-      [data-theme="dark"] .speaker-6 { color: #EF5350; }
-      [data-theme="dark"] .speaker-7 { color: #4DD0E1; }
-      [data-theme="dark"] .speaker-8 { color: #AED581; }
-      [data-theme="dark"] .speaker-9 { color: #FFD54F; }
-      [data-theme="dark"] .speaker-10 { color: #90A4AE; }
+      [data-theme="dark"] .speaker-1 {
+        color: #64b5f6;
+      }
+      [data-theme="dark"] .speaker-2 {
+        color: #81c784;
+      }
+      [data-theme="dark"] .speaker-3 {
+        color: #ffb74d;
+      }
+      [data-theme="dark"] .speaker-4 {
+        color: #f06292;
+      }
+      [data-theme="dark"] .speaker-5 {
+        color: #ba68c8;
+      }
+      [data-theme="dark"] .speaker-6 {
+        color: #ef5350;
+      }
+      [data-theme="dark"] .speaker-7 {
+        color: #4dd0e1;
+      }
+      [data-theme="dark"] .speaker-8 {
+        color: #aed581;
+      }
+      [data-theme="dark"] .speaker-9 {
+        color: #ffd54f;
+      }
+      [data-theme="dark"] .speaker-10 {
+        color: #90a4ae;
+      }
       .action-buttons {
         display: flex;
         align-items: center;
@@ -729,7 +715,8 @@
         color: #ffffff;
       }
       /* Toggle emojis sizing */
-      #timestamps-toggle, #diarization-toggle {
+      #timestamps-toggle,
+      #diarization-toggle {
         font-size: 18px;
         line-height: 1;
       }
@@ -1042,52 +1029,37 @@
         class="theme-toggle"
         id="theme-toggle"
         onclick="toggleTheme()"
-        data-i18n-title="themeToggle"
+        title="החלף נושא"
       >
         <i data-lucide="sun" id="sun-icon"></i>
         <i data-lucide="moon" id="moon-icon" style="display: none"></i>
       </button>
-      <button
-        class="settings-btn"
-        id="settings-btn"
-        data-i18n-title="settings"
-      >
+      <button class="settings-btn" id="settings-btn" title="הגדרות">
         <i data-lucide="settings"></i>
       </button>
-      <div class="lang-menu" id="lang-menu">
-        <div class="dropdown">
-          <button id="lang-btn" title="שפה" aria-label="שפה">
-            <i data-lucide="globe"></i>
-          </button>
-          <div class="dropdown-content">
-            <button type="button" data-lang="he">עברית</button>
-            <button type="button" data-lang="yi">ייִדיש</button>
-            <button type="button" data-lang="en">English</button>
-          </div>
-        </div>
-      </div>
-      <h1 data-i18n="title">תמלול בעזרת ivrit.ai</h1>
+      <h1>תמלול</h1>
       <div id="drop-area">
-        <p data-i18n="dropPrompt">גרור קובץ לכאן או לחץ לבחירת קובץ</p>
+        <p>גרור קובץ לכאן או לחץ לבחירת קובץ</p>
         <input type="file" id="file-input" accept="audio/*,video/*" />
       </div>
 
       <div class="file-preview" id="file-preview">
         <div class="file-info">
           <div class="file-details">
-            <strong id="preview-file-name" data-i18n="fileSelected">קובץ נבחר</strong>
-          <div class="file-size" id="preview-file-size" dir="ltr">
-              <span data-i18n="fileSize">גודל קובץ</span>
+            <strong id="preview-file-name">קובץ נבחר</strong>
+            <div class="file-size" id="preview-file-size" dir="ltr">
+              <span>גודל קובץ</span>
             </div>
           </div>
-          <button class="remove-file-btn" onclick="removeFile()" data-i18n="removeFile">הסר קובץ</button>
+          <button class="remove-file-btn" onclick="removeFile()">
+            הסר קובץ
+          </button>
         </div>
       </div>
 
       <div id="file-name"></div>
       <div class="transcribe-controls">
-        <button id="transcribe-btn" disabled data-i18n="transcribe">תמלל</button>
-        <select id="language-select" title="שפת תמלול" aria-label="שפת תמלול"></select>
+        <button id="transcribe-btn" disabled>תמלל</button>
       </div>
       <div id="progress-container">
         <div id="progress-bar"></div>
@@ -1099,45 +1071,40 @@
             title="פורמט הטקסט: טקסט רציף"
             aria-label="פורמט הטקסט"
           >
-            <svg id="text-format-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M4 6h16M10 12h10M4 18h16"/>
+            <svg
+              id="text-format-icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M4 6h16M10 12h10M4 18h16" />
             </svg>
           </button>
-          <button
-            id="timestamps-toggle"
-            title="קודי זמן"
-            aria-label="קודי זמן"
-          >
+          <button id="timestamps-toggle" title="קודי זמן" aria-label="קודי זמן">
             🕒
           </button>
-          <button
-            id="diarization-toggle"
-            title="דוברים"
-            aria-label="דוברים"
-          >
+          <button id="diarization-toggle" title="דוברים" aria-label="דוברים">
             🗣️
           </button>
         </div>
 
         <div class="actions-left">
-          <button
-            id="copy-btn"
-            disabled
-            data-i18n-title="copyText"
-          >
+          <button id="copy-btn" disabled data-i18n-title="copyText">
             <i data-lucide="copy"></i>
           </button>
 
           <div class="download-menu">
-            <button
-              id="download-menu-btn"
-              disabled
-              data-i18n-title="downloads"
-            >
+            <button id="download-menu-btn" disabled data-i18n-title="downloads">
               <i data-lucide="download"></i>
             </button>
             <div class="download-dropdown">
-              <div class="download-dropdown-header" data-i18n="downloadAs">הורד כ...</div>
+              <div class="download-dropdown-header" data-i18n="downloadAs">
+                הורד כ...
+              </div>
               <button type="button" data-action="vtt" disabled id="menu-vtt">
                 VTT
               </button>
@@ -1179,31 +1146,6 @@
       <div id="transcription-container">
         <div id="transcription" contenteditable="false"></div>
       </div>
-      <div class="links-container">
-        <a href="mailto:info@ivrit.ai" class="contact-link">
-          <i data-lucide="mail"></i>
-          <span data-i18n="contactUs">רוצים ליצור קשר? אנחנו כאן</span>
-        </a>
-        <a
-          href="https://www.patreon.com/ivrit_ai/membership"
-          target="_blank"
-          class="support-link"
-        >
-          <img
-            src="{{ url_for('static', path='patreon.png') }}"
-            alt="Patreon"
-          />
-          <span data-i18n="donateAsk">רוצים לתרום לנו?</span>
-        </a>
-      </div>
-      <div class="site-footer">
-        <a
-          href="https://www.ivrit.ai/en/privacy/"
-          target="_blank"
-          rel="noopener"
-          ><span data-i18n="privacyTos">מדיניות פרטיות ותנאי שימוש</span></a
-        >
-      </div>
     </div>
 
     <div id="settings-modal" class="modal">
@@ -1216,7 +1158,9 @@
           <div class="settings-section">
             <h3 data-i18n="settingsRunpod">הגדרות RunPod</h3>
             <div class="form-group">
-              <label for="runpod-token" dir="ltr" data-i18n="runpodKeyLabel">RunPod API Key:</label>
+              <label for="runpod-token" dir="ltr" data-i18n="runpodKeyLabel"
+                >RunPod API Key:</label
+              >
               <input
                 type="password"
                 id="runpod-token"
@@ -1225,12 +1169,16 @@
                 placeholder="הכנס את ה-API Key שלך"
               />
               <small class="form-help"
-                ><span data-i18n="runpodHelpText">הזנת מפתח פרטי מאפשרת שימוש במשאבים פרטיים לעיבוד מהיר יותר.</span><br />
+                ><span data-i18n="runpodHelpText"
+                  >הזנת מפתח פרטי מאפשרת שימוש במשאבים פרטיים לעיבוד מהיר
+                  יותר.</span
+                ><br />
                 <a
                   href="https://youtu.be/xr8RQRFERLs?si=ibHcP6m0wdUh-gHU"
                   target="_blank"
                   rel="noopener"
-                  data-i18n="runpodHelpWatch">לצפייה בסרטון הסבר</a
+                  data-i18n="runpodHelpWatch"
+                  >לצפייה בסרטון הסבר</a
                 ></small
               >
             </div>
@@ -1249,10 +1197,10 @@
             </div>
           </div>
 
-          
-
           <div class="modal-buttons">
-            <button type="submit" class="btn btn-primary" data-i18n="save">שמור</button>
+            <button type="submit" class="btn btn-primary" data-i18n="save">
+              שמור
+            </button>
             <button
               type="button"
               class="btn btn-secondary"
@@ -1268,30 +1216,25 @@
       </div>
     </div>
 
-    <script src="{{ url_for('static', path='i18n.js') }}"></script>
+    <!-- i18n removed -->
     <script>
       // Initialize Lucide icons after DOM is parsed
       document.addEventListener("DOMContentLoaded", () => {
         if (window.lucide && typeof window.lucide.createIcons === "function") {
           window.lucide.createIcons()
         }
-        if (window.I18N) {
-          window.I18N.apply()
-          const langBtn = document.getElementById('lang-btn')
-          if (langBtn) {
-            langBtn.title = window.I18N.t('language')
-            langBtn.setAttribute('aria-label', window.I18N.t('language'))
-          }
-        }
-        initTranscriptionLanguages()
+        // ממשק ברירת מחדל בעברית
         // Ensure toggles reflect initial defaults/saved state on first load
         updateTextFormatToggleUI()
         updateTimestampsToggleUI()
         updateDiarizationToggleUI()
         // Force diarization enabled by default visually on first load
         if (!displaySettings.diarizationDisplay) {
-          displaySettings.diarizationDisplay = 'enabled'
-          localStorage.setItem('displaySettings', JSON.stringify(displaySettings))
+          displaySettings.diarizationDisplay = "enabled"
+          localStorage.setItem(
+            "displaySettings",
+            JSON.stringify(displaySettings)
+          )
           updateDiarizationToggleUI()
         }
         updateTranscriptionDirectionUI()
@@ -1303,7 +1246,6 @@
       const progressContainer = document.getElementById("progress-container")
       const progressBar = document.getElementById("progress-bar")
       const transcriptionArea = document.getElementById("transcription")
-      const languageSelect = document.getElementById("language-select")
       const copyBtn = document.getElementById("copy-btn")
       const downloadBtn = document.getElementById("download-btn")
       const downloadDocxBtn = document.getElementById("download-docx-btn")
@@ -1318,90 +1260,12 @@
       const menuDocxBtn = document.getElementById("menu-docx")
       const menuJsonBtn = document.getElementById("menu-json")
       const settingsBtn = document.getElementById("settings-btn")
-      const langMenu = document.getElementById("lang-menu")
-      // Language selection handlers
-      if (langMenu && window.I18N) {
-        langMenu.addEventListener('click', (e) => {
-          const btn = e.target.closest('button[data-lang]')
-          if (!btn) return
-          const lang = btn.getAttribute('data-lang')
-          window.I18N.setLanguage(lang)
-          window.I18N.apply()
-          if (window.lucide && typeof window.lucide.createIcons === 'function') {
-            window.lucide.createIcons()
-          }
-          // Keep transcription language default aligned with UI language when user changes UI language
-          if (languageSelect) {
-            if ([...languageSelect.options].some(o => o.value === lang)) {
-              languageSelect.value = lang
-            }
-          }
-          updateTranscriptionDirectionUI()
-        })
-      }
       const settingsModal = document.getElementById("settings-modal")
       const closeSettings = document.getElementById("close-settings")
       const cancelSettings = document.getElementById("cancel-settings")
       const clearSettings = document.getElementById("clear-settings")
       const settingsForm = document.getElementById("settings-form")
       const runpodTokenInput = document.getElementById("runpod-token")
-
-      async function initTranscriptionLanguages() {
-        try {
-          const resp = await fetch('/languages')
-          const data = await resp.json()
-          const langs = (data && data.languages) ? data.languages : {}
-          if (!languageSelect) return
-          languageSelect.innerHTML = ''
-          const KNOWN = [
-            { key: 'he', label: 'עברית' },
-            { key: 'en', label: 'English' },
-            { key: 'fr', label: 'Français' },
-            { key: 'es', label: 'Español' },
-            { key: 'de', label: 'Deutsch' },
-            { key: 'zh', label: '中文' },
-          ]
-          const addIfEnabled = ({ key, label }) => {
-            const cfg = langs[key]
-            if (cfg && cfg.enabled) {
-              const opt = document.createElement('option')
-              opt.value = key
-              opt.textContent = label
-              languageSelect.appendChild(opt)
-            }
-          }
-          KNOWN.forEach(addIfEnabled)
-          const uiLang = (window.I18N && window.I18N.current) ? window.I18N.current : 'he'
-          if ([...languageSelect.options].some(o => o.value === uiLang)) {
-            languageSelect.value = uiLang
-          } else if (languageSelect.options.length > 0) {
-            languageSelect.selectedIndex = 0
-          }
-          updateTranscriptionDirectionUI()
-        } catch (e) {
-          if (!languageSelect) return
-          if (languageSelect.options.length === 0) {
-            ;[
-              { key: 'he', label: 'עברית' },
-              { key: 'en', label: 'English' },
-              { key: 'fr', label: 'Français' },
-              { key: 'es', label: 'Español' },
-              { key: 'de', label: 'Deutsch' },
-              { key: 'zh', label: '中文' },
-            ].forEach(({ key, label }) => {
-              const opt = document.createElement('option')
-              opt.value = key
-              opt.textContent = label
-              languageSelect.appendChild(opt)
-            })
-            const uiLang = (window.I18N && window.I18N.current) ? window.I18N.current : 'he'
-            if ([...languageSelect.options].some(o => o.value === uiLang)) {
-              languageSelect.value = uiLang
-            }
-            updateTranscriptionDirectionUI()
-          }
-        }
-      }
 
       let selectedFile = null
       let selectedFiles = []
@@ -1436,7 +1300,12 @@
         toast.className = `toast ${type}`
 
         // Support multi-line messages using \n
-        const formatted = (message || "").toString().replace(/\n/g, "<br />")
+        const formatted = (message || "")
+          .toString()
+          .replace(/\n/g, "<br />")
+          .replace(/\\n/g, "<br />")
+          .replace(/endpointCheckError/g, "שגיאת בדיקת endpoint")
+          .replace(/endpointCheckError/g, "שגיאת בדיקת endpoint")
         toast.innerHTML = `
           <span class="toast-message">${formatted}</span>
         `
@@ -1472,18 +1341,13 @@
         document.getElementById("file-name").style.display = "block"
         document.getElementById("file-name").textContent = ""
         fileInput.value = ""
-        showToast(window.I18N.t('fileRemovedSuccess'), "success")
+        showToast("הקובץ הוסר בהצלחה", "success")
       }
 
       function formatFileSize(bytes) {
         if (bytes === 0) return "0 Bytes"
         const k = 1024
-        const sizes = [
-          window.I18N.t('unitBytes'),
-          window.I18N.t('unitKB'),
-          window.I18N.t('unitMB'),
-          window.I18N.t('unitGB')
-        ]
+        const sizes = ["Bytes", "KB", "MB", "GB"]
         const i = Math.floor(Math.log(bytes) / Math.log(k))
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
       }
@@ -1554,104 +1418,95 @@
 
         if (hasCredentials) {
           settingsBtn.style.color = "#4CAF50"
-          settingsBtn.title = window.I18N.t('settingsWithRunpodSaved')
+          settingsBtn.title = "הגדרות (RunPod נשמר)"
         } else {
           settingsBtn.style.color = "#666"
-          settingsBtn.title = window.I18N.t('settings')
+          settingsBtn.title = "הגדרות"
         }
       }
 
       // Save settings to cookies and localStorage
       async function saveSettings() {
-        // Save display settings
+        // Persist display settings
         const textFormat = displaySettings.textFormat || "continuous"
         const timestampFormat = displaySettings.timestampFormat || "none"
-        const diarizationDisplay = displaySettings.diarizationDisplay || "enabled"
-
+        const diarizationDisplay =
+          displaySettings.diarizationDisplay || "enabled"
         displaySettings.textFormat = textFormat
         displaySettings.timestampFormat = timestampFormat
         displaySettings.diarizationDisplay = diarizationDisplay
         localStorage.setItem("displaySettings", JSON.stringify(displaySettings))
 
-        // Update transcription display if there are results
         if (transcriptionSegments.length > 0) {
           updateTranscriptionDisplay()
         }
 
         const token = runpodTokenInput.value.trim()
-
-        // If token is empty, just clear the RunPod credentials but keep display settings
         if (!token) {
           deleteCookie("runpod_token")
           settingsModal.style.display = "none"
           settingsModal.classList.remove("show")
           updateSettingsButtonIndicator()
-          showToast(window.I18N.t('settingsSaved'), "success")
+          showToast("הגדרות נשמרו", "success")
           return
         }
 
-        // Show loading state
         const saveBtn = document.querySelector(
           '#settings-form button[type="submit"]'
         )
         const originalText = saveBtn.textContent
-        saveBtn.textContent = window.I18N.t('verifyChecking')
+        saveBtn.textContent = "בודק..."
         saveBtn.disabled = true
 
         try {
-          // Verify credentials by checking balance
           const response = await fetch(
             `/balance?runpod_token=${encodeURIComponent(token)}`
-          )
+          ).catch((e) => {
+            throw e
+          })
           const data = await response.json()
-
           if (!response.ok) {
             showToast(
               `שגיאה בבדיקת הגדרות RunPod:\n${response.status}: ${data.error}`,
               "error"
             )
           } else {
-            // Credentials are valid, check endpoint
             const endpointResult = await checkAndCreateEndpoint(token)
-
             if (endpointResult.success) {
-              // Save credentials
-              setCookie("runpod_token", token, 365 * 24 * 60 * 60) // 1 year
-
-              let successMessage = window.I18N.t('runpodSettingsSaved')
-              if (endpointResult.needsWait) {
-                successMessage += ' ' + window.I18N.t('runpodEndpointWait')
-              }
+              setCookie("runpod_token", token, 365 * 24 * 60 * 60)
+              let successMessage = "הגדרות RunPod נשמרו"
+              if (endpointResult.needsWait)
+                successMessage += " ממתין ליצירת endpoint..."
               showToast(successMessage, "success")
               settingsModal.style.display = "none"
               settingsModal.classList.remove("show")
               updateSettingsButtonIndicator()
-              checkBalance() // Update balance display
+              checkBalance()
             } else {
-              showToast(`${window.I18N.t('endpointCheckError')}\n${endpointResult.error || ''}`.trim(), "error")
+              showToast(
+                `שגיאת בדיקת endpoint\n${endpointResult.error || ""}`.trim(),
+                "error"
+              )
             }
           }
         } catch (error) {
           console.error("Error verifying credentials:", error)
           if (
             error.name === "TypeError" &&
-            error.message.includes("Failed to fetch")
+            (error.message || "").includes("Failed to fetch")
           ) {
             showToast(
               "שגיאה: לא ניתן להתחבר לשרת RunPod.\nאנא בדוק את החיבור לאינטרנט ונסה שוב.",
               "error"
             )
           } else {
-            showToast(`שגיאה בבדיקת הגדרות RunPod.\n ${error.message}`, "error")
+            showToast(`שגיאה בבדיקת הגדרות RunPod.\n${error.message}`, "error")
           }
         } finally {
-          // Restore button state
           saveBtn.textContent = originalText
           saveBtn.disabled = false
         }
       }
-
-      // Clear all settings
       function clearAllSettings() {
         // Clear RunPod settings
         deleteCookie("runpod_token")
@@ -1721,7 +1576,7 @@
           const balanceAmount = document.getElementById("balance-amount")
 
           balanceContainer.classList.add("visible")
-          balanceAmount.textContent = window.I18N.t('loading')
+          balanceAmount.textContent = "טוען..."
           balanceAmount.className = "balance-amount balance-loading"
 
           try {
@@ -1735,12 +1590,12 @@
               balanceAmount.textContent = `$${formattedBalance}`
               balanceAmount.className = "balance-amount"
             } else {
-              balanceAmount.textContent = window.I18N.t('balanceLoadingError')
+              balanceAmount.textContent = "שגיאה בטעינת יתרה"
               balanceAmount.className = "balance-amount"
             }
           } catch (error) {
             console.error("Balance fetch error:", error)
-            balanceAmount.textContent = window.I18N.t('balanceLoadingError')
+            balanceAmount.textContent = "שגיאה בטעינת יתרה"
             balanceAmount.className = "balance-amount"
           }
         }
@@ -1848,7 +1703,9 @@
       async function handleDrop(e) {
         const dt = e.dataTransfer
         // Allow dropping multiple files/folders only with private key
-        const isPrivate = (runpodTokenInput && runpodTokenInput.value.trim()) || getCookie("runpod_token")
+        const isPrivate =
+          (runpodTokenInput && runpodTokenInput.value.trim()) ||
+          getCookie("runpod_token")
         if (isPrivate && dt.items && dt.items.length) {
           const files = await extractFilesFromDataTransfer(dt)
           handleFiles(files)
@@ -1915,7 +1772,9 @@
       })
 
       function handleFiles(files) {
-        const isPrivate = (runpodTokenInput && runpodTokenInput.value.trim()) || getCookie("runpod_token")
+        const isPrivate =
+          (runpodTokenInput && runpodTokenInput.value.trim()) ||
+          getCookie("runpod_token")
         const list = Array.from(files || [])
         if (!list.length) return
 
@@ -1926,7 +1785,10 @@
           const valid = []
           for (const f of list) {
             if (f.size > maxSize) {
-              showToast((window.I18N ? window.I18N.t('fileTooLarge', { size: maxText }) : `הקובץ גדול מדי. הגודל המקסימלי המותר הוא ${maxText}`) + `: ${f.name}`, "error")
+              showToast(
+                `הקובץ גדול מדי. הגודל המקסימלי המותר הוא ${maxText}: ${f.name}`,
+                "error"
+              )
               continue
             }
             valid.push(f)
@@ -1943,15 +1805,20 @@
           transcribeBtn.disabled = false
           document.getElementById("file-preview").classList.remove("show")
           document.getElementById("file-name").style.display = "block"
-          document.getElementById("file-name").textContent = (window.I18N ? window.I18N.t('filesSelectedCount', { count: valid.length }) : `${valid.length} קבצים נבחרו`)
-          showToast((window.I18N ? window.I18N.t('filesSelectedSuccess', { count: valid.length }) : `${valid.length} קבצים נבחרו בהצלחה`), "success")
+          document.getElementById(
+            "file-name"
+          ).textContent = `${valid.length} קבצים נבחרו`
+          showToast(`${valid.length} קבצים נבחרו בהצלחה`, "success")
         } else {
           // Single-file mode
           selectedFile = list[0]
           const maxFileSize = getMaxFileSize()
           const maxFileSizeText = getMaxFileSizeText()
           if (selectedFile.size > maxFileSize) {
-            showToast((window.I18N ? window.I18N.t('fileTooLarge', { size: maxFileSizeText }) : `הקובץ גדול מדי. הגודל המקסימלי המותר הוא ${maxFileSizeText}`), "error")
+            showToast(
+              `הקובץ גדול מדי. הגודל המקסימלי המותר הוא ${maxFileSizeText}`,
+              "error"
+            )
             selectedFile = null
             transcribeBtn.disabled = true
             fileName.textContent = ""
@@ -1960,13 +1827,15 @@
             batchMode = false
             transcribeBtn.disabled = false
             showFilePreview(selectedFile)
-            showToast((window.I18N ? window.I18N.t('fileSelectedSuccess') : "קובץ נבחר בהצלחה"), "success")
+            showToast("קובץ נבחר בהצלחה", "success")
           }
         }
       }
 
       dropArea.addEventListener("click", () => {
-        const isPrivate = (runpodTokenInput && runpodTokenInput.value.trim()) || getCookie("runpod_token")
+        const isPrivate =
+          (runpodTokenInput && runpodTokenInput.value.trim()) ||
+          getCookie("runpod_token")
         if (isPrivate) {
           fileInput.setAttribute("multiple", "multiple")
         } else {
@@ -1994,20 +1863,14 @@
         const token = getCookie("runpod_token")
         if (token) {
           formData.append("runpod_token", token)
-          transcriptionArea.innerHTML = window.I18N.t('usingRunpod')
+          transcriptionArea.innerHTML = "משתמש ב-RunPod"
         }
-
-        // Include selected transcription language for backend
-        try {
-          const selectedLang = (languageSelect && languageSelect.value) ? languageSelect.value : ((window.I18N && window.I18N.current) ? window.I18N.current : 'he')
-          formData.append('language', selectedLang)
-        } catch {}
 
         transcribeBtn.disabled = true
         progressContainer.style.display = "block"
         progressBar.style.width = "0%"
         if (!token) {
-          transcriptionArea.innerHTML = window.I18N.t('uploading')
+          transcriptionArea.innerHTML = "מעלה..."
         }
         updateTranscriptionDirectionUI()
         copyBtn.disabled = true
@@ -2024,7 +1887,9 @@
           if (event.lengthComputable) {
             const percentComplete = (event.loaded / event.total) * 100
             progressBar.style.width = percentComplete + "%"
-            transcriptionArea.innerHTML = window.I18N.t('uploadingProgress', { progress: percentComplete.toFixed(1) })
+            transcriptionArea.innerHTML = `מעלה... ${percentComplete.toFixed(
+              1
+            )}%`
           }
         }
 
@@ -2034,7 +1899,7 @@
             if (response.error) {
               showError(response.error)
             } else {
-              transcriptionArea.innerHTML = (window.I18N ? window.I18N.t('uploadedStarting') : "קובץ הועלה. מתחיל בתמלול...")
+              transcriptionArea.innerHTML = "קובץ הועלה. מתחיל בתמלול..."
               pollJobStatus(response.job_id)
             }
           } else {
@@ -2052,7 +1917,7 @@
 
             if (!errorMessage) {
               const currentTime = new Date().toISOString()
-              reportMessage = window.I18N.t('errorReportTemplate', { time: currentTime, details: xhr.statusText })
+              reportMessage = `שגיאה בזמן העלאת קובץ. זמן: ${currentTime}. פרטים: ${xhr.statusText}`
             }
 
             showError(reportMessage)
@@ -2060,7 +1925,7 @@
         }
 
         xhr.onerror = function () {
-          showError(window.I18N.t('uploadError'))
+          showError("שגיאת העלאה")
         }
 
         xhr.send(formData)
@@ -2072,7 +1937,7 @@
         transcribeBtn.disabled = true
         progressContainer.style.display = "block"
         progressBar.style.width = "0%"
-        transcriptionArea.innerHTML = (window.I18N ? window.I18N.t('batchStarting', { count: selectedFiles.length }) : `מתחיל עיבוד אצווה של ${selectedFiles.length} קבצים...`)
+        transcriptionArea.innerHTML = `מתחיל עיבוד אצווה של ${selectedFiles.length} קבצים...`
         updateTranscriptionDirectionUI()
         copyBtn.disabled = true
         downloadBtn.disabled = true
@@ -2081,37 +1946,51 @@
         downloadMenuBtn.disabled = true
 
         const token = getCookie("runpod_token")
-        const selectedLang = (languageSelect && languageSelect.value) ? languageSelect.value : ((window.I18N && window.I18N.current) ? window.I18N.current : 'he')
 
         for (let i = 0; i < selectedFiles.length; i++) {
           const file = selectedFiles[i]
-          transcriptionArea.innerHTML = (window.I18N ? window.I18N.t('batchUploading', { index: i + 1, total: selectedFiles.length, filename: file.name }) : `מעלה ${i + 1}/${selectedFiles.length}: ${file.name}`)
+          transcriptionArea.innerHTML = `מעלה ${i + 1}/${
+            selectedFiles.length
+          }: ${file.name}`
 
           const formData = new FormData()
           formData.append("file", file)
-          formData.append('language', selectedLang)
           if (token) formData.append("runpod_token", token)
 
           let jobId = null
           try {
-            const resp = await fetch("/upload", { method: "POST", body: formData })
+            const resp = await fetch("/upload", {
+              method: "POST",
+              body: formData,
+            })
             const data = await resp.json()
             if (!resp.ok || data.error) {
-              const err = data && data.error ? data.error : (window.I18N ? window.I18N.t('uploadError') : 'שגיאת העלאה')
+              const err = data && data.error ? data.error : "שגיאת העלאה"
               showToast(`${file.name}: ${err}`, "error")
               continue
             }
             jobId = data.job_id
           } catch (err) {
-            showToast(`${file.name}: ${(window.I18N ? window.I18N.t('uploadError') : 'שגיאת העלאה')}`, "error")
+            showToast(`${file.name}: שגיאת העלאה`, "error")
             continue
           }
 
-          const results = await pollJobStatusBatch(jobId, i + 1, selectedFiles.length, file.name)
+          const results = await pollJobStatusBatch(
+            jobId,
+            i + 1,
+            selectedFiles.length,
+            file.name
+          )
           if (results && Array.isArray(results) && results.length > 0) {
             try {
-              if (!window.htmlDocx || typeof window.htmlDocx.asBlob !== "function") {
-                showToast((window.I18N ? window.I18N.t('docxLibMissing') : 'ספריית יצירת המסמך לא נטענה. בדקו את החיבור ונסו שוב.'), "error")
+              if (
+                !window.htmlDocx ||
+                typeof window.htmlDocx.asBlob !== "function"
+              ) {
+                showToast(
+                  "ספריית יצירת המסמך לא נטענה. בדקו את החיבור ונסו שוב.",
+                  "error"
+                )
                 continue
               }
               const html = buildDocxHTMLFromSegmentsParam(results)
@@ -2124,22 +2003,22 @@
               a.click()
               document.body.removeChild(a)
               URL.revokeObjectURL(url)
-              showToast((window.I18N ? window.I18N.t('docxDownloaded', { filename: file.name }) : `קובץ DOCX ירד: ${file.name}`), "success")
+              showToast(`קובץ DOCX ירד: ${file.name}`, "success")
             } catch (err) {
-              showToast(`${file.name}: ${(window.I18N ? window.I18N.t('docxCreateError') : 'שגיאה ביצירת DOCX')}`, "error")
+              showToast(`${file.name}: שגיאה ביצירת DOCX`, "error")
             }
           }
         }
 
         resetUploadState()
-        transcriptionArea.innerHTML = (window.I18N ? window.I18N.t('batchDone') : 'האצווה הושלמה')
+        transcriptionArea.innerHTML = "האצווה הושלמה"
       }
 
       function getDocxNameFromOriginal(originalName) {
-        if (!originalName) return 'transcription.docx'
-        const idx = originalName.lastIndexOf('.')
-        if (idx > 0) return originalName.slice(0, idx) + '.docx'
-        return originalName + '.docx'
+        if (!originalName) return "transcription.docx"
+        const idx = originalName.lastIndexOf(".")
+        if (idx > 0) return originalName.slice(0, idx) + ".docx"
+        return originalName + ".docx"
       }
 
       async function pollJobStatusBatch(jobId, index, total, filename) {
@@ -2156,11 +2035,13 @@
                 }
                 if (data.queue_position) {
                   progressBar.style.width = "0%"
-                  transcriptionArea.innerHTML = (window.I18N ? window.I18N.t('batchQueued', { index, total, position: data.queue_position, eta: data.time_ahead, filename }) : `בתור (${index}/${total}) ${filename} · מקום ${data.queue_position} · ETA ${data.time_ahead}`)
+                  transcriptionArea.innerHTML = `בתור (${index}/${total}) ${filename} · מקום ${data.queue_position} · ETA ${data.time_ahead}`
                   setTimeout(poll, pollInterval)
                 } else if (data.progress !== undefined) {
                   progressBar.style.width = `${data.progress * 100}%`
-                  transcriptionArea.innerHTML = (window.I18N ? window.I18N.t('batchTranscribing', { index, total, filename, progress: (data.progress * 100).toFixed(1) }) : `מתמלל (${index}/${total}) ${filename} · ${(data.progress * 100).toFixed(1)}%`)
+                  transcriptionArea.innerHTML = `מתמלל (${index}/${total}) ${filename} · ${(
+                    data.progress * 100
+                  ).toFixed(1)}%`
                   if (data.progress < 1.0) {
                     setTimeout(poll, pollInterval)
                   } else {
@@ -2171,7 +2052,7 @@
                 }
               })
               .catch(() => {
-                showToast(`${filename}: ${(window.I18N ? window.I18N.t('statusError') : 'שגיאת סטטוס')}`, "error")
+                showToast(`${filename}: שגיאת סטטוס`, "error")
                 resolve(null)
               })
           }
@@ -2181,7 +2062,8 @@
 
       function buildDocxHTMLFromSegmentsParam(segments) {
         const docLang = getTranscriptionLanguage()
-        const diarizationEnabled = displaySettings.diarizationDisplay !== "disabled"
+        const diarizationEnabled =
+          displaySettings.diarizationDisplay !== "disabled"
         const speakerColors = {
           1: "#2196F3",
           2: "#4CAF50",
@@ -2192,74 +2074,134 @@
           7: "#3F51B5",
           8: "#795548",
           9: "#607D8B",
-          10: "#8BC34A"
+          10: "#8BC34A",
         }
-        const esc = (text) => String(text || '').replace(/[&<>]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))
+        const esc = (text) =>
+          String(text || "").replace(
+            /[&<>]/g,
+            (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c])
+          )
 
         const lines = []
-        const isRTL = ['he', 'yi'].includes(docLang)
-        lines.push('<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">')
-        lines.push('<head><meta charset="utf-8"><title>Transcript</title></head>')
-        lines.push('<body style="font-family:\'Arial\', \'Helvetica\', sans-serif; font-size:12pt; direction:' + (isRTL ? 'rtl' : 'ltr') + '; text-align:' + (isRTL ? 'right' : 'left') + '">')
+        const isRTL = ["he", "yi"].includes(docLang)
+        lines.push(
+          '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">'
+        )
+        lines.push(
+          '<head><meta charset="utf-8"><title>Transcript</title></head>'
+        )
+        lines.push(
+          "<body style=\"font-family:'Arial', 'Helvetica', sans-serif; font-size:12pt; direction:" +
+            (isRTL ? "rtl" : "ltr") +
+            "; text-align:" +
+            (isRTL ? "right" : "left") +
+            '">'
+        )
 
         if (displaySettings.timestampFormat === "segments") {
           for (let i = 0; i < segments.length; i++) {
             const seg = segments[i]
-            const text = esc((seg.text || '').trim())
+            const text = esc((seg.text || "").trim())
             const start = formatTimeForDisplay(seg.start || 0)
             const end = formatTimeForDisplay(seg.end || 0)
             if (diarizationEnabled) {
               if (seg.speakers && seg.speakers.length > 0) {
-                const speakerNumber = parseInt(seg.speakers[0].replace('SPEAKER_', '')) || 0
+                const speakerNumber =
+                  parseInt(seg.speakers[0].replace("SPEAKER_", "")) || 0
                 const colorIndex = ((speakerNumber - 1) % 10) + 1
-                const color = speakerColors[colorIndex] || '#000000'
-                const label = (typeof translateSpeakerLabelText === 'function' ? translateSpeakerLabelText(docLang, speakerNumber) : ('Speaker ' + speakerNumber)) + ': '
-                lines.push('<p>[' + start + '-' + end + '] ' + '<span style="color:' + color + '; font-weight:700">' + label + '</span>' + text + '</p>')
+                const color = speakerColors[colorIndex] || "#000000"
+                const label =
+                  (typeof translateSpeakerLabelText === "function"
+                    ? translateSpeakerLabelText(docLang, speakerNumber)
+                    : "Speaker " + speakerNumber) + ": "
+                lines.push(
+                  "<p>[" +
+                    start +
+                    "-" +
+                    end +
+                    "] " +
+                    '<span style="color:' +
+                    color +
+                    '; font-weight:700">' +
+                    label +
+                    "</span>" +
+                    text +
+                    "</p>"
+                )
               } else {
-                const unknownText = (typeof translateSpeakerUnknownText === 'function' ? translateSpeakerUnknownText(docLang) : 'Unknown speaker')
-                lines.push('<p>[' + start + '-' + end + '] ' + '<span style="font-weight:700">' + unknownText + ': </span>' + text + '</p>')
+                const unknownText =
+                  typeof translateSpeakerUnknownText === "function"
+                    ? translateSpeakerUnknownText(docLang)
+                    : "Unknown speaker"
+                lines.push(
+                  "<p>[" +
+                    start +
+                    "-" +
+                    end +
+                    "] " +
+                    '<span style="font-weight:700">' +
+                    unknownText +
+                    ": </span>" +
+                    text +
+                    "</p>"
+                )
               }
             } else {
-              lines.push('<p>[' + start + '-' + end + '] ' + text + '</p>')
+              lines.push("<p>[" + start + "-" + end + "] " + text + "</p>")
             }
           }
         } else {
           let currentSpeaker = undefined
           let bufferParts = []
-          let currentLabelHTML = ''
+          let currentLabelHTML = ""
 
           const flushParagraph = () => {
             if (bufferParts.length === 0) return
-            const content = bufferParts.join(' ').trim()
+            const content = bufferParts.join(" ").trim()
             if (currentLabelHTML) {
-              lines.push('<p>' + currentLabelHTML + content + '</p>')
+              lines.push("<p>" + currentLabelHTML + content + "</p>")
             } else {
-              lines.push('<p>' + content + '</p>')
+              lines.push("<p>" + content + "</p>")
             }
             bufferParts = []
-            currentLabelHTML = ''
+            currentLabelHTML = ""
           }
 
           for (let i = 0; i < segments.length; i++) {
             const seg = segments[i]
-            const rawSpeaker = seg.speakers && seg.speakers.length > 0 ? seg.speakers[0] : null
-            const segText = esc((seg.text || '').trim())
-            const speakerChanged = i === 0 ? true : rawSpeaker !== currentSpeaker
+            const rawSpeaker =
+              seg.speakers && seg.speakers.length > 0 ? seg.speakers[0] : null
+            const segText = esc((seg.text || "").trim())
+            const speakerChanged =
+              i === 0 ? true : rawSpeaker !== currentSpeaker
             if (speakerChanged) {
               flushParagraph()
               if (diarizationEnabled) {
                 if (rawSpeaker) {
-                  const speakerNumber = parseInt(rawSpeaker.replace('SPEAKER_', '')) || 0
+                  const speakerNumber =
+                    parseInt(rawSpeaker.replace("SPEAKER_", "")) || 0
                   const colorIndex = ((speakerNumber - 1) % 10) + 1
-                  const color = speakerColors[colorIndex] || '#000000'
-                  const label = (typeof translateSpeakerLabelText === 'function' ? translateSpeakerLabelText(docLang, speakerNumber) : ('Speaker ' + speakerNumber)) + ': '
-                  currentLabelHTML = '<span style="color:' + color + '; font-weight:700">' + label + '</span>'
+                  const color = speakerColors[colorIndex] || "#000000"
+                  const label =
+                    (typeof translateSpeakerLabelText === "function"
+                      ? translateSpeakerLabelText(docLang, speakerNumber)
+                      : "Speaker " + speakerNumber) + ": "
+                  currentLabelHTML =
+                    '<span style="color:' +
+                    color +
+                    '; font-weight:700">' +
+                    label +
+                    "</span>"
                 } else {
-                  const unknownText = (typeof translateSpeakerUnknownText === 'function' ? translateSpeakerUnknownText(docLang) : 'Unknown speaker')
-                  currentLabelHTML = '<span style="font-weight:700">' + unknownText + ': </span>'
+                  const unknownText =
+                    typeof translateSpeakerUnknownText === "function"
+                      ? translateSpeakerUnknownText(docLang)
+                      : "Unknown speaker"
+                  currentLabelHTML =
+                    '<span style="font-weight:700">' + unknownText + ": </span>"
                 }
               } else {
-                currentLabelHTML = ''
+                currentLabelHTML = ""
               }
               currentSpeaker = rawSpeaker
             }
@@ -2268,10 +2210,9 @@
           flushParagraph()
         }
 
-        lines.push('<p style="color:#666; font-size:10pt; margin-top:16pt">' + (window.I18N ? window.I18N.t('transcriptFooter') : 'תומלל באמצעות שירות התמלול של ivrit.ai') + '</p>')
-        lines.push('</body>')
-        lines.push('</html>')
-        return lines.join('\n')
+        lines.push("</body>")
+        lines.push("</html>")
+        return lines.join("\n")
       }
 
       function pollJobStatus(jobId) {
@@ -2289,32 +2230,37 @@
               }
 
               if (data.queue_position) {
-                let statusMessage = (window.I18N ? window.I18N.t('queuePosition', { position: data.queue_position, eta: data.time_ahead }) : `בתור במקום ${data.queue_position}. זמן משוער להתחלה: ${data.time_ahead}`)
+                let statusMessage = `בתור במקום ${data.queue_position}. זמן משוער להתחלה: ${data.time_ahead}`
                 if (data.job_type) {
                   let jobTypeText
                   switch (data.job_type) {
                     case "short":
-                      jobTypeText = (window.I18N ? window.I18N.t('jobTypeShort') : "קצרה")
+                      jobTypeText = "קצרה"
                       break
                     case "long":
-                      jobTypeText = (window.I18N ? window.I18N.t('jobTypeLong') : "ארוכה")
+                      jobTypeText = "ארוכה"
                       break
                     case "private":
-                      jobTypeText = (window.I18N ? window.I18N.t('jobTypePrivate') : "פרטית")
+                      jobTypeText = "פרטית"
                       break
                     default:
                       jobTypeText = data.job_type
                   }
-                  statusMessage += (window.I18N ? ('\n' + window.I18N.t('jobTypePrefix', { jobType: jobTypeText })) : `, סוג עבודה: ${jobTypeText}`)
+                  statusMessage += `, סוג עבודה: ${jobTypeText}`
                 }
-                statusMessage += `\n\n${(window.I18N ? window.I18N.t('waitingMsg') : '')}`
-                transcriptionArea.innerHTML = statusMessage.replace(/\n/g, '<br>')
+                statusMessage += `\n\nממתין לעיבוד...`
+                transcriptionArea.innerHTML = statusMessage.replace(
+                  /\n/g,
+                  "<br>"
+                )
                 progressBar.style.width = "0%"
                 activeTranscription = true
                 setTimeout(poll, pollInterval)
               } else if (data.progress !== undefined) {
                 progressBar.style.width = `${data.progress * 100}%`
-                transcriptionArea.innerHTML = (window.I18N ? window.I18N.t('transcribing', { progress: (data.progress * 100).toFixed(1) }) : `מתמלל... ${(data.progress * 100).toFixed(1)}%`)
+                transcriptionArea.innerHTML = `מתמלל... ${(
+                  data.progress * 100
+                ).toFixed(1)}%`
                 activeTranscription = true
 
                 if (data.progress < 1.0) {
@@ -2330,7 +2276,7 @@
             })
             .catch((error) => {
               console.error("Error:", error)
-              showError((window.I18N ? window.I18N.t('statusError') : "אירעה שגיאה בבדיקת סטטוס העבודה"))
+              showError("אירעה שגיאה בבדיקת סטטוס העבודה")
               activeTranscription = false
             })
         }
@@ -2364,9 +2310,15 @@
             const startTime = currentGroup[0].start
             const endTime = currentGroup[currentGroup.length - 1].end
 
-            const groupText = displaySettings.diarizationDisplay === "enabled"
-              ? joinSegmentsWithSpeakerChanges(currentGroup, separator, "<br>", true)
-              : currentGroup.map((seg) => seg.text.trim()).join(separator)
+            const groupText =
+              displaySettings.diarizationDisplay === "enabled"
+                ? joinSegmentsWithSpeakerChanges(
+                    currentGroup,
+                    separator,
+                    "<br>",
+                    true
+                  )
+                : currentGroup.map((seg) => seg.text.trim()).join(separator)
 
             const formattedStartTime = formatTimeForDisplay(startTime)
             const formattedEndTime = formatTimeForDisplay(endTime)
@@ -2410,82 +2362,83 @@
         }
       }
 
-      // Update transcription area direction and alignment based on selected language
       function updateTranscriptionDirectionUI() {
-        const lang = (languageSelect && languageSelect.value) ? languageSelect.value : ((window.I18N && window.I18N.current) ? window.I18N.current : 'he')
-        const rtlLangs = ['he', 'yi']
-        const isRTL = rtlLangs.includes(lang)
         if (transcriptionArea) {
-          transcriptionArea.style.direction = isRTL ? 'rtl' : 'ltr'
-          transcriptionArea.style.textAlign = isRTL ? 'right' : 'left'
+          transcriptionArea.style.direction = "rtl"
+          transcriptionArea.style.textAlign = "right"
         }
       }
 
-      // Speaker label localization should follow the transcription target language, not UI language
       function getTranscriptionLanguage() {
-        try {
-          if (languageSelect && languageSelect.value) return languageSelect.value
-        } catch {}
-        return (window.I18N && window.I18N.current) ? window.I18N.current : 'he'
+        return "he"
       }
 
       const SPEAKER_I18N = {
-        he: { speaker: 'דובר {num}', unknown: 'דובר לא מזוהה' },
-        yi: { speaker: 'רעדנדיקער {num}', unknown: 'ניט־ידענטיפֿיצירטער רעדנדיקער' },
-        en: { speaker: 'Speaker {num}', unknown: 'Unknown speaker' },
-        fr: { speaker: 'Locuteur {num}', unknown: 'Locuteur inconnu' },
-        es: { speaker: 'Hablante {num}', unknown: 'Hablante desconocido' },
-        de: { speaker: 'Sprecher {num}', unknown: 'Unbekannter Sprecher' },
-        zh: { speaker: '说话者 {num}', unknown: '未知说话者' }
+        he: { speaker: "דובר {num}", unknown: "דובר לא מזוהה" },
       }
 
       function translateSpeakerLabelText(lang, num) {
-        const entry = SPEAKER_I18N[lang] || SPEAKER_I18N['en']
-        const template = entry.speaker || 'Speaker {num}'
-        return String(template).replace('{num}', String(num))
+        const entry = SPEAKER_I18N[lang] || SPEAKER_I18N["en"]
+        const template = entry.speaker || "Speaker {num}"
+        return String(template).replace("{num}", String(num))
       }
 
       function translateSpeakerUnknownText(lang) {
-        const entry = SPEAKER_I18N[lang] || SPEAKER_I18N['en']
-        return entry.unknown || 'Unknown speaker'
+        const entry = SPEAKER_I18N[lang] || SPEAKER_I18N["en"]
+        return entry.unknown || "Unknown speaker"
       }
 
       function getSpeakerLabel(segment) {
         const lang = getTranscriptionLanguage()
         if (segment.speakers && segment.speakers.length > 0) {
-          const speakerNumber = parseInt(segment.speakers[0].replace("SPEAKER_", ""))
-          const speakerLabelText = translateSpeakerLabelText(lang, speakerNumber)
+          const speakerNumber = parseInt(
+            segment.speakers[0].replace("SPEAKER_", "")
+          )
+          const speakerLabelText = translateSpeakerLabelText(
+            lang,
+            speakerNumber
+          )
           return `<span class="speaker speaker-${speakerNumber}">${speakerLabelText}: </span>`
         }
-        return `<span class="speaker">${translateSpeakerUnknownText(lang)}: </span>`
+        return `<span class="speaker">${translateSpeakerUnknownText(
+          lang
+        )}: </span>`
       }
-      
+
       function getSpeakerLabelPlain(segment) {
         const lang = getTranscriptionLanguage()
         if (segment.speakers && segment.speakers.length > 0) {
-          const speakerNumber = parseInt(segment.speakers[0].replace("SPEAKER_", ""))
+          const speakerNumber = parseInt(
+            segment.speakers[0].replace("SPEAKER_", "")
+          )
           return `${translateSpeakerLabelText(lang, speakerNumber)}: `
         }
         return `${translateSpeakerUnknownText(lang)}: `
       }
-      
+
       function getPlainTextFromSegments() {
         if (!transcriptionSegments || transcriptionSegments.length === 0) {
           return ""
         }
-        
+
         let result
         if (displaySettings.timestampFormat === "segments") {
           result = formatWithTimecodesPlain(transcriptionSegments)
         } else {
-          const continuousSeparator = displaySettings.textFormat === "continuous" ? " " : "\n"
+          const continuousSeparator =
+            displaySettings.textFormat === "continuous" ? " " : "\n"
           const segmentSeparator = "\n"
-          result = joinSegmentsWithSpeakerChanges(transcriptionSegments, continuousSeparator, segmentSeparator, false)
+          result = joinSegmentsWithSpeakerChanges(
+            transcriptionSegments,
+            continuousSeparator,
+            segmentSeparator,
+            false
+          )
         }
-        
-        return result + "\n\n" + (window.I18N ? window.I18N.t('transcriptFooter') : "תומלל באמצעות שירות התמלול של ivrit.ai")
+
+        return result
       }
-      
+
       function formatWithTimecodesPlain(segments) {
         if (!segments || segments.length === 0) return ""
 
@@ -2512,9 +2465,15 @@
             const startTime = currentGroup[0].start
             const endTime = currentGroup[currentGroup.length - 1].end
 
-            const groupText = displaySettings.diarizationDisplay === "enabled"
-              ? joinSegmentsWithSpeakerChanges(currentGroup, separator, "\n", false)
-              : currentGroup.map((seg) => seg.text.trim()).join(separator)
+            const groupText =
+              displaySettings.diarizationDisplay === "enabled"
+                ? joinSegmentsWithSpeakerChanges(
+                    currentGroup,
+                    separator,
+                    "\n",
+                    false
+                  )
+                : currentGroup.map((seg) => seg.text.trim()).join(separator)
 
             const formattedStartTime = formatTimeForDisplay(startTime)
             const formattedEndTime = formatTimeForDisplay(endTime)
@@ -2545,36 +2504,48 @@
       }
 
       function showError(message) {
-        transcriptionArea.innerHTML = `${window.I18N.t('errorPrefix')}: ${message}`
+        transcriptionArea.innerHTML = `שגיאה: ${message}`
         resetAllState()
       }
 
-      function joinSegmentsWithSpeakerChanges(segments, continuousSeparator, segmentSeparator, isHTML = true) {
+      function joinSegmentsWithSpeakerChanges(
+        segments,
+        continuousSeparator,
+        segmentSeparator,
+        isHTML = true
+      ) {
         if (!segments || segments.length === 0) return ""
-        
+
         const result = []
         let currentSpeaker = null
-        const diarizationEnabled = displaySettings.diarizationDisplay === "enabled"
-        
+        const diarizationEnabled =
+          displaySettings.diarizationDisplay === "enabled"
+
         for (let i = 0; i < segments.length; i++) {
           const segment = segments[i]
-          const segmentSpeaker = segment.speakers && segment.speakers.length > 0 ? segment.speakers[0] : null
-          
+          const segmentSpeaker =
+            segment.speakers && segment.speakers.length > 0
+              ? segment.speakers[0]
+              : null
+
           // Determine if we should show the speaker label (only if diarization is enabled)
-          const showSpeakerLabel = diarizationEnabled && segmentSpeaker !== currentSpeaker
-          
+          const showSpeakerLabel =
+            diarizationEnabled && segmentSpeaker !== currentSpeaker
+
           // Get segment text with or without speaker label
-          const segmentText = showSpeakerLabel 
-            ? (isHTML ? getSpeakerLabel(segment) + segment.text.trim() : getSpeakerLabelPlain(segment) + segment.text.trim())
+          const segmentText = showSpeakerLabel
+            ? isHTML
+              ? getSpeakerLabel(segment) + segment.text.trim()
+              : getSpeakerLabelPlain(segment) + segment.text.trim()
             : segment.text.trim()
-          
+
           if (i === 0) {
             // First segment
             result.push(segmentText)
             currentSpeaker = segmentSpeaker
           } else if (diarizationEnabled && segmentSpeaker !== currentSpeaker) {
             // Speaker changed and diarization enabled - use double line break
-            result.push('<br><br>' + segmentText)
+            result.push("<br><br>" + segmentText)
             currentSpeaker = segmentSpeaker
           } else {
             // Same speaker OR diarization disabled - use the appropriate separator based on format
@@ -2584,7 +2555,7 @@
             }
           }
         }
-        
+
         return result.join("")
       }
 
@@ -2594,12 +2565,16 @@
         if (displaySettings.timestampFormat === "segments") {
           result = formatWithTimecodes(transcriptionSegments)
         } else {
-          const continuousSeparator = displaySettings.textFormat === "continuous" ? " " : "<br>"
+          const continuousSeparator =
+            displaySettings.textFormat === "continuous" ? " " : "<br>"
           const segmentSeparator = "<br>"
-          result = joinSegmentsWithSpeakerChanges(transcriptionSegments, continuousSeparator, segmentSeparator, true)
+          result = joinSegmentsWithSpeakerChanges(
+            transcriptionSegments,
+            continuousSeparator,
+            segmentSeparator,
+            true
+          )
         }
-
-        result = result + "<br><br>" + (window.I18N ? window.I18N.t('transcriptFooter') : "תומלל באמצעות שירות התמלול של ivrit.ai")
 
         transcriptionArea.innerHTML = result
         updateTranscriptionDirectionUI()
@@ -2636,43 +2611,44 @@
             // Continuous mode: three lines with middle right-aligned
             svg.insertAdjacentHTML(
               "afterbegin",
-              '<path d="M4 6h16"/>\n' + '<path d="M10 12h10"/>\n' + '<path d="M4 18h16"/>'
+              '<path d="M4 6h16"/>\n' +
+                '<path d="M10 12h10"/>\n' +
+                '<path d="M4 18h16"/>'
             )
           }
         }
-        textFormatToggleBtn.title = isSegments
-          ? window.I18N.t('textFormatSegmentsTitle')
-          : window.I18N.t('textFormatContinuousTitle')
-        textFormatToggleBtn.setAttribute('aria-pressed', String(isSegments))
-        textFormatToggleBtn.classList.toggle('toggle-active', isSegments)
+        textFormatToggleBtn.title = isSegments ? "מצב מקטעים" : "מצב רציף"
+        textFormatToggleBtn.setAttribute("aria-pressed", String(isSegments))
+        textFormatToggleBtn.classList.toggle("toggle-active", isSegments)
         // No lucide refresh needed for inline SVG
       }
 
       function updateTimestampsToggleUI() {
         if (!timestampsToggleBtn) return
         const enabled = displaySettings.timestampFormat === "segments"
-        timestampsToggleBtn.classList.toggle('toggle-active', enabled)
-        timestampsToggleBtn.title = enabled
-          ? (window.I18N ? window.I18N.t('timestampsSegments') : 'כולל קודי זמן')
-          : (window.I18N ? window.I18N.t('timestampsNone') : 'ללא קודי זמן')
-        timestampsToggleBtn.setAttribute('aria-pressed', String(enabled))
+        timestampsToggleBtn.classList.toggle("toggle-active", enabled)
+        timestampsToggleBtn.title = enabled ? "כולל קודי זמן" : "ללא קודי זמן"
+        timestampsToggleBtn.setAttribute("aria-pressed", String(enabled))
       }
 
       function updateDiarizationToggleUI() {
         if (!diarizationToggleBtn) return
         const enabled = displaySettings.diarizationDisplay === "enabled"
-        diarizationToggleBtn.classList.toggle('toggle-active', enabled)
-        diarizationToggleBtn.title = enabled
-          ? (window.I18N ? window.I18N.t('diarizationEnabled') : 'הצג דוברים')
-          : (window.I18N ? window.I18N.t('diarizationDisabled') : 'הסתר דוברים')
-        diarizationToggleBtn.setAttribute('aria-pressed', String(enabled))
+        diarizationToggleBtn.classList.toggle("toggle-active", enabled)
+        diarizationToggleBtn.title = enabled ? "הצג דוברים" : "הסתר דוברים"
+        diarizationToggleBtn.setAttribute("aria-pressed", String(enabled))
       }
 
       if (textFormatToggleBtn) {
         textFormatToggleBtn.addEventListener("click", () => {
           displaySettings.textFormat =
-            displaySettings.textFormat === "segments" ? "continuous" : "segments"
-          localStorage.setItem("displaySettings", JSON.stringify(displaySettings))
+            displaySettings.textFormat === "segments"
+              ? "continuous"
+              : "segments"
+          localStorage.setItem(
+            "displaySettings",
+            JSON.stringify(displaySettings)
+          )
           updateTextFormatToggleUI()
           if (transcriptionSegments.length > 0) {
             updateTranscriptionDisplay()
@@ -2681,18 +2657,28 @@
       }
 
       if (timestampsToggleBtn) {
-        timestampsToggleBtn.addEventListener('click', () => {
-          displaySettings.timestampFormat = displaySettings.timestampFormat === 'segments' ? 'none' : 'segments'
-          localStorage.setItem('displaySettings', JSON.stringify(displaySettings))
+        timestampsToggleBtn.addEventListener("click", () => {
+          displaySettings.timestampFormat =
+            displaySettings.timestampFormat === "segments" ? "none" : "segments"
+          localStorage.setItem(
+            "displaySettings",
+            JSON.stringify(displaySettings)
+          )
           updateTimestampsToggleUI()
           if (transcriptionSegments.length > 0) updateTranscriptionDisplay()
         })
       }
 
       if (diarizationToggleBtn) {
-        diarizationToggleBtn.addEventListener('click', () => {
-          displaySettings.diarizationDisplay = displaySettings.diarizationDisplay === 'enabled' ? 'disabled' : 'enabled'
-          localStorage.setItem('displaySettings', JSON.stringify(displaySettings))
+        diarizationToggleBtn.addEventListener("click", () => {
+          displaySettings.diarizationDisplay =
+            displaySettings.diarizationDisplay === "enabled"
+              ? "disabled"
+              : "enabled"
+          localStorage.setItem(
+            "displaySettings",
+            JSON.stringify(displaySettings)
+          )
           updateDiarizationToggleUI()
           if (transcriptionSegments.length > 0) updateTranscriptionDisplay()
         })
@@ -2728,18 +2714,21 @@
       copyBtn.addEventListener("click", function () {
         // Get plain text content for copying
         const plainText = getPlainTextFromSegments()
-        navigator.clipboard.writeText(plainText).then(() => {
-          showToast((window.I18N ? window.I18N.t('copySuccess') : "הטקסט הועתק ללוח בהצלחה"), "success")
-        }).catch(() => {
-          // Fallback for older browsers
-          const range = document.createRange()
-          range.selectNode(transcriptionArea)
-          window.getSelection().removeAllRanges()
-          window.getSelection().addRange(range)
-          document.execCommand("copy")
-          window.getSelection().removeAllRanges()
-          showToast((window.I18N ? window.I18N.t('copySuccess') : "הטקסט הועתק ללוח בהצלחה"), "success")
-        })
+        navigator.clipboard
+          .writeText(plainText)
+          .then(() => {
+            showToast("הטקסט הועתק ללוח בהצלחה", "success")
+          })
+          .catch(() => {
+            // Fallback for older browsers
+            const range = document.createRange()
+            range.selectNode(transcriptionArea)
+            window.getSelection().removeAllRanges()
+            window.getSelection().addRange(range)
+            document.execCommand("copy")
+            window.getSelection().removeAllRanges()
+            showToast("הטקסט הועתק ללוח בהצלחה", "success")
+          })
       })
 
       downloadBtn.addEventListener("click", function () {
@@ -2772,8 +2761,14 @@
         if (!transcriptionSegments.length) return
 
         try {
-          if (!window.htmlDocx || typeof window.htmlDocx.asBlob !== "function") {
-            showToast("ספריית יצירת המסמך לא נטענה. בדקו את החיבור ונסו שוב.", "error")
+          if (
+            !window.htmlDocx ||
+            typeof window.htmlDocx.asBlob !== "function"
+          ) {
+            showToast(
+              "ספריית יצירת המסמך לא נטענה. בדקו את החיבור ונסו שוב.",
+              "error"
+            )
             return
           }
 
@@ -2798,89 +2793,149 @@
             }
 
             const lines = []
-            lines.push('<!DOCTYPE html>')
-            const docLang = (typeof getTranscriptionLanguage === 'function') ? getTranscriptionLanguage() : 'he'
-            const isRTL = ['he', 'yi'].includes(docLang)
-            const docDir = isRTL ? 'rtl' : 'ltr'
-            const textAlign = isRTL ? 'right' : 'left'
+            lines.push("<!DOCTYPE html>")
+            const docLang =
+              typeof getTranscriptionLanguage === "function"
+                ? getTranscriptionLanguage()
+                : "he"
+            const isRTL = ["he", "yi"].includes(docLang)
+            const docDir = isRTL ? "rtl" : "ltr"
+            const textAlign = isRTL ? "right" : "left"
             lines.push('<html lang="' + docLang + '" dir="' + docDir + '">')
-            lines.push('<head>')
+            lines.push("<head>")
             lines.push('<meta charset="utf-8" />')
-            lines.push('<style>')
-            lines.push('body { font-family: Arial, "Noto Sans Hebrew", "Rubik", sans-serif; direction: ' + docDir + '; unicode-bidi: embed; }')
-            lines.push('h1 { text-align: ' + textAlign + '; font-size: 24pt; margin: 0 0 18pt; }')
-            lines.push('p { text-align: ' + textAlign + '; line-height: 1.6; margin: 0 0 10pt; }')
-            lines.push('</style>')
-            lines.push('</head>')
-            lines.push('<body>')
-            lines.push('<h1>' + (window.I18N ? window.I18N.t('transcriptHeaderDocx') : 'תמלול') + '</h1>')
+            lines.push("<style>")
+            lines.push(
+              'body { font-family: Arial, "Noto Sans Hebrew", "Rubik", sans-serif; direction: ' +
+                docDir +
+                "; unicode-bidi: embed; }"
+            )
+            lines.push(
+              "h1 { text-align: " +
+                textAlign +
+                "; font-size: 24pt; margin: 0 0 18pt; }"
+            )
+            lines.push(
+              "p { text-align: " +
+                textAlign +
+                "; line-height: 1.6; margin: 0 0 10pt; }"
+            )
+            lines.push("</style>")
+            lines.push("</head>")
+            lines.push("<body>")
+            lines.push("<h1>תמלול</h1>")
 
-            const diarizationEnabled = displaySettings.diarizationDisplay === "enabled"
-            const separateEachSegment = displaySettings.textFormat === "segments"
+            const diarizationEnabled =
+              displaySettings.diarizationDisplay === "enabled"
+            const separateEachSegment =
+              displaySettings.textFormat === "segments"
 
             if (separateEachSegment) {
               // One paragraph per segment
               for (let i = 0; i < transcriptionSegments.length; i++) {
                 const seg = transcriptionSegments[i]
-                const text = escapeHtml((seg.text || '').trim())
-                const rawSpeaker = seg.speakers && seg.speakers.length > 0 ? seg.speakers[0] : null
+                const text = escapeHtml((seg.text || "").trim())
+                const rawSpeaker =
+                  seg.speakers && seg.speakers.length > 0
+                    ? seg.speakers[0]
+                    : null
 
                 if (diarizationEnabled) {
                   if (rawSpeaker) {
-                    const speakerNumber = parseInt(rawSpeaker.replace('SPEAKER_', '')) || 0
+                    const speakerNumber =
+                      parseInt(rawSpeaker.replace("SPEAKER_", "")) || 0
                     const colorIndex = ((speakerNumber - 1) % 10) + 1
-                    const color = speakerColors[colorIndex] || '#000000'
-                    const label = (typeof translateSpeakerLabelText === 'function' ? translateSpeakerLabelText(docLang, speakerNumber) : ('Speaker ' + speakerNumber)) + ': '
-                    lines.push('<p><span style="color:' + color + '; font-weight:700">' + label + '</span>' + text + '</p>')
+                    const color = speakerColors[colorIndex] || "#000000"
+                    const label =
+                      (typeof translateSpeakerLabelText === "function"
+                        ? translateSpeakerLabelText(docLang, speakerNumber)
+                        : "Speaker " + speakerNumber) + ": "
+                    lines.push(
+                      '<p><span style="color:' +
+                        color +
+                        '; font-weight:700">' +
+                        label +
+                        "</span>" +
+                        text +
+                        "</p>"
+                    )
                   } else {
-                    const unknownText = (typeof translateSpeakerUnknownText === 'function' ? translateSpeakerUnknownText(docLang) : 'Unknown speaker')
-                    lines.push('<p><span style="font-weight:700">' + unknownText + ': </span>' + text + '</p>')
+                    const unknownText =
+                      typeof translateSpeakerUnknownText === "function"
+                        ? translateSpeakerUnknownText(docLang)
+                        : "Unknown speaker"
+                    lines.push(
+                      '<p><span style="font-weight:700">' +
+                        unknownText +
+                        ": </span>" +
+                        text +
+                        "</p>"
+                    )
                   }
                 } else {
-                  lines.push('<p>' + text + '</p>')
+                  lines.push("<p>" + text + "</p>")
                 }
               }
             } else {
               // Continuous mode: start a new paragraph only on speaker change
               let currentSpeaker = undefined
               let bufferParts = []
-              let currentLabelHTML = ''
+              let currentLabelHTML = ""
 
               const flushParagraph = () => {
                 if (bufferParts.length === 0) return
-                const content = bufferParts.join(' ').trim()
+                const content = bufferParts.join(" ").trim()
                 if (currentLabelHTML) {
-                  lines.push('<p>' + currentLabelHTML + content + '</p>')
+                  lines.push("<p>" + currentLabelHTML + content + "</p>")
                 } else {
-                  lines.push('<p>' + content + '</p>')
+                  lines.push("<p>" + content + "</p>")
                 }
                 bufferParts = []
-                currentLabelHTML = ''
+                currentLabelHTML = ""
               }
 
               for (let i = 0; i < transcriptionSegments.length; i++) {
                 const seg = transcriptionSegments[i]
-                const rawSpeaker = seg.speakers && seg.speakers.length > 0 ? seg.speakers[0] : null
-                const segText = escapeHtml((seg.text || '').trim())
+                const rawSpeaker =
+                  seg.speakers && seg.speakers.length > 0
+                    ? seg.speakers[0]
+                    : null
+                const segText = escapeHtml((seg.text || "").trim())
 
-                const speakerChanged = i === 0 ? true : rawSpeaker !== currentSpeaker
+                const speakerChanged =
+                  i === 0 ? true : rawSpeaker !== currentSpeaker
                 if (speakerChanged) {
                   // Emit previous paragraph
                   flushParagraph()
                   // Prepare new label if diarization is enabled
                   if (diarizationEnabled) {
                     if (rawSpeaker) {
-                      const speakerNumber = parseInt(rawSpeaker.replace('SPEAKER_', '')) || 0
+                      const speakerNumber =
+                        parseInt(rawSpeaker.replace("SPEAKER_", "")) || 0
                       const colorIndex = ((speakerNumber - 1) % 10) + 1
-                      const color = speakerColors[colorIndex] || '#000000'
-                      const label = (typeof translateSpeakerLabelText === 'function' ? translateSpeakerLabelText(docLang, speakerNumber) : ('Speaker ' + speakerNumber)) + ': '
-                      currentLabelHTML = '<span style="color:' + color + '; font-weight:700">' + label + '</span>'
+                      const color = speakerColors[colorIndex] || "#000000"
+                      const label =
+                        (typeof translateSpeakerLabelText === "function"
+                          ? translateSpeakerLabelText(docLang, speakerNumber)
+                          : "Speaker " + speakerNumber) + ": "
+                      currentLabelHTML =
+                        '<span style="color:' +
+                        color +
+                        '; font-weight:700">' +
+                        label +
+                        "</span>"
                     } else {
-                      const unknownText = (typeof translateSpeakerUnknownText === 'function' ? translateSpeakerUnknownText(docLang) : 'Unknown speaker')
-                      currentLabelHTML = '<span style="font-weight:700">' + unknownText + ': </span>'
+                      const unknownText =
+                        typeof translateSpeakerUnknownText === "function"
+                          ? translateSpeakerUnknownText(docLang)
+                          : "Unknown speaker"
+                      currentLabelHTML =
+                        '<span style="font-weight:700">' +
+                        unknownText +
+                        ": </span>"
                     }
                   } else {
-                    currentLabelHTML = ''
+                    currentLabelHTML = ""
                   }
                   currentSpeaker = rawSpeaker
                 }
@@ -2892,10 +2947,9 @@
               flushParagraph()
             }
 
-            lines.push('<p style="color:#666; font-size:10pt; margin-top:16pt">' + (window.I18N ? window.I18N.t('transcriptFooter') : 'תומלל באמצעות שירות התמלול של ivrit.ai') + '</p>')
-            lines.push('</body>')
-            lines.push('</html>')
-            return lines.join('\n')
+            lines.push("</body>")
+            lines.push("</html>")
+            return lines.join("\n")
           }
 
           const html = buildDocxHTMLFromSegments()
@@ -2988,16 +3042,14 @@
 
       // Custom confirmation dialog
       function showExitWarning() {
-        return confirm(
-          window.I18N.t('exitWarning')
-        )
+        return confirm("תמלול פעיל עדיין רץ, האם לצאת?")
       }
 
       window.addEventListener("beforeunload", function (e) {
         if (activeTranscription) {
           // Show confirmation dialog
           e.preventDefault()
-          e.returnValue = window.I18N.t('exitWarning')
+          e.returnValue = "תמלול פעיל עדיין רץ, האם לצאת?"
           return e.returnValue
         }
       })

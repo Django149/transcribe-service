@@ -57,7 +57,6 @@ parser.add_argument('--hiatus', action='store_true', help='Enable hiatus mode')
 parser.add_argument('--verbose', action='store_true', help='Enable verbose logging')
 parser.add_argument('--dev', action='store_true', help='Enable development mode')
 parser.add_argument('--dev-user-email', help='User email for development mode')
-parser.add_argument('--config', dest='config_path', required=True, help='Path to configuration JSON defining languages and models')
 args, unknown = parser.parse_known_args()
 
 # Rate limiting configuration from CLI arguments
@@ -70,24 +69,8 @@ in_dev = args.staging or args.dev
 in_hiatus_mode = args.hiatus
 verbose = args.verbose
 
-# Load language/model configuration (mandatory, after args are parsed)
-CONFIG_PATH = args.config_path
-LANG_CONFIG = {}
-with open(CONFIG_PATH, "r", encoding="utf-8") as _cfg_f:
-    LANG_CONFIG = _json.load(_cfg_f)
-
-# Basic validation of configuration
-if "languages" not in LANG_CONFIG or not isinstance(LANG_CONFIG["languages"], dict):
-    raise RuntimeError("Invalid configuration: missing 'languages' dictionary")
-for lang_key, lang_cfg in LANG_CONFIG["languages"].items():
-    if not isinstance(lang_cfg, dict):
-        raise RuntimeError(f"Invalid configuration for language '{lang_key}': must be an object")
-    if "model" not in lang_cfg or not isinstance(lang_cfg["model"], str) or not lang_cfg["model"].strip():
-        raise RuntimeError(f"Invalid configuration for language '{lang_key}': missing or invalid 'model'")
-    if "general_availability" not in lang_cfg or not isinstance(lang_cfg["general_availability"], bool):
-        raise RuntimeError(f"Invalid configuration for language '{lang_key}': missing or invalid 'general_availability' (bool)")
-    if "enabled" not in lang_cfg or not isinstance(lang_cfg["enabled"], bool):
-        raise RuntimeError(f"Invalid configuration for language '{lang_key}': missing or invalid 'enabled' (bool)")
+ # Model configuration (single model)
+MODEL_NAME = os.environ.get("MODEL_NAME", "ivrit-ai/whisper-large-v3-turbo-ct2")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -383,7 +366,7 @@ async def calculate_queue_time(queue_to_use, running_jobs, exclude_last=False):
     return str(timedelta(seconds=int(time_ahead)))
 
 
-async def queue_job(job_id, user_email, filename, duration, runpod_token="", language="he"):
+async def queue_job(job_id, user_email, filename, duration, runpod_token=""):
     # Try to add the job to the queue
     log_message(f"{user_email}: Queuing job {job_id}...")
 
@@ -419,7 +402,6 @@ async def queue_job(job_id, user_email, filename, duration, runpod_token="", lan
         job_desc.duration = duration
         job_desc.runpod_token = runpod_token
         job_desc.uses_custom_runpod = bool(runpod_token)
-        job_desc.language = language
 
         # Determine queue type based on job characteristics
         if job_desc.uses_custom_runpod:
@@ -489,17 +471,6 @@ async def index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
 
-@app.get("/languages")
-async def list_languages():
-    """Return language configuration for client UI."""
-    langs = {
-        key: {
-            "enabled": cfg.get("enabled", False),
-            "general_availability": cfg.get("general_availability", False),
-        }
-        for key, cfg in LANG_CONFIG.get("languages", {}).items()
-    }
-    return JSONResponse({"languages": langs})
 
 
 @app.get("/login")
@@ -1006,7 +977,6 @@ async def upload_file(
     request: Request,
     file: UploadFile = File(...),
     runpod_token: Optional[str] = Form(None),
-    language: Optional[str] = Form(None),
 ):
     job_id = str(uuid.uuid4())
     user_email = get_user_email(request)
@@ -1025,22 +995,10 @@ async def upload_file(
 
     filename = secure_filename(file.filename)
 
-    # Determine requested language and model from config
-    if not language:
-        return JSONResponse({"error": "Missing language"}, status_code=400)
-    requested_lang = language  # assume already lowercase and correct
-    languages_cfg = LANG_CONFIG["languages"]
-    if requested_lang not in languages_cfg:
-        return JSONResponse({"error": "Unsupported language"}, status_code=400)
-    lang_cfg = languages_cfg[requested_lang]
 
     # Get RunPod token early to determine file size limits
     runpod_token = runpod_token.strip() if runpod_token else ""
     has_private_credentials = bool(runpod_token)
-
-    # Enforce language availability: if not generally available and no private key, reject
-    if (not lang_cfg["general_availability"]) and (not has_private_credentials):
-        return JSONResponse({"error": "שפה זו זמינה רק לשימוש עם מפתח RunPod פרטי."}, status_code=400)
     
     # Define file size limits
     MAX_FILE_SIZE_REGULAR = 300 * 1024 * 1024  # 300MB
@@ -1121,7 +1079,7 @@ async def upload_file(
             return JSONResponse({"error": message}, status_code=400)
 
     # Use the background event loop to call the async function
-    queued, res = await queue_job(job_id, user_email, filename, duration, runpod_token, requested_lang)
+    queued, res = await queue_job(job_id, user_email, filename, duration, runpod_token)
     if queued:
         job_results[job_id] = {"results": [], "completion_time": None, "progress": 0}
     else:
@@ -1287,12 +1245,10 @@ async def transcribe_job(job_desc):
             api_key = os.environ["RUNPOD_API_KEY"]
             endpoint_id = os.environ["RUNPOD_ENDPOINT_ID"]
             log_message(f"{job_desc.user_email}: using default RunPod credentials")
-        
-        # Resolve model by language from config
-        lang_cfg = LANG_CONFIG["languages"][job_desc.language]
-        selected_model = lang_cfg["model"]
-        m = ivrit.load_model(engine='runpod', model=selected_model, api_key=api_key, endpoint_id=endpoint_id, core_engine='stable-whisper')
-        
+
+        # Load model
+        m = ivrit.load_model(engine='runpod', model=MODEL_NAME, api_key=api_key, endpoint_id=endpoint_id, core_engine='stable-whisper')
+
         # Process streaming results
         try:
             if in_dev:
@@ -1303,7 +1259,7 @@ async def transcribe_job(job_desc):
                 base_url = os.environ["BASE_URL"]
                 download_url = urljoin(base_url, f"/download/{job_id}")
                 segs = m.transcribe_async(url=download_url, diarize=True)
-            
+
             async for segment in segs:
                 if not await process_segment(job_id, segment, duration):
                     # Job was terminated
@@ -1326,7 +1282,6 @@ async def transcribe_job(job_desc):
                 "transcription_seconds": transcribe_done_time - job_desc.transcribe_start_time,
                 "audio_duration_seconds": duration,
                 "job-type": job_desc.job_type,
-                "language": job_desc.language,
                 "custom-runpod": job_desc.uses_custom_runpod,
             },
         )
