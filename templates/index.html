@@ -48,25 +48,6 @@
         max-width: 600px;
         position: relative;
       }
-      .settings-btn {
-        position: absolute;
-        top: 1rem;
-        left: 1rem;
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 0.5rem;
-        border-radius: 50%;
-        transition: background-color 0.2s;
-      }
-      .settings-btn:hover {
-        background-color: #f0f0f0;
-      }
-      .settings-btn svg {
-        width: 24px;
-        height: 24px;
-        color: #666;
-      }
       .theme-toggle {
         position: absolute;
         top: 1rem;
@@ -86,80 +67,6 @@
         width: 24px;
         height: 24px;
         color: #666;
-      }
-      .balance-container {
-        display: none;
-        position: absolute;
-        top: 1rem;
-        right: 1rem;
-        background: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        padding: 0.75rem 1rem;
-        font-size: 14px;
-        color: #495057;
-        text-align: right;
-        z-index: 10;
-      }
-      .balance-container.visible {
-        display: block;
-      }
-      .balance-label {
-        font-weight: bold;
-        margin-bottom: 0.25rem;
-      }
-      .balance-amount {
-        color: #28a745;
-        font-weight: bold;
-      }
-      .balance-loading {
-        color: #6c757d;
-        font-style: italic;
-      }
-      .modal .balance-container {
-        position: relative;
-        top: 0;
-        right: 0;
-        margin-top: 0.9rem;
-        z-index: 1;
-        background: linear-gradient(
-          135deg,
-          var(--input-bg) 0%,
-          rgba(0, 0, 0, 0) 100%
-        );
-        border: 1px solid var(--border-color);
-        display: none;
-        padding: 0.65rem 0.85rem;
-        border-radius: 10px;
-        font-size: 0.9rem;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
-        direction: rtl;
-        text-align: right;
-      }
-      .modal .balance-container.visible {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.6rem;
-        width: fit-content;
-        white-space: nowrap;
-      }
-      .balance-icon svg {
-        width: 20px;
-        height: 20px;
-        color: var(--primary-color);
-      }
-      .balance-text {
-        display: flex;
-        align-items: baseline;
-        gap: 0.4rem;
-      }
-      .modal .balance-label {
-        margin: 0;
-        font-weight: 600;
-        color: var(--text-color);
-      }
-      .modal .balance-amount {
-        font-size: 0.95rem;
       }
       .modal {
         display: none;
@@ -1010,15 +917,6 @@
       html[dir] .modal .radio-option {
         direction: inherit;
       }
-      html[dir] .modal .balance-container {
-        direction: inherit;
-        text-align: start;
-      }
-      /* Keep RunPod token input LTR regardless of UI language */
-      #runpod-token {
-        direction: ltr;
-        text-align: left;
-      }
     </style>
   </head>
   <body>
@@ -1033,9 +931,6 @@
       >
         <i data-lucide="sun" id="sun-icon"></i>
         <i data-lucide="moon" id="moon-icon" style="display: none"></i>
-      </button>
-      <button class="settings-btn" id="settings-btn" title="הגדרות">
-        <i data-lucide="settings"></i>
       </button>
       <h1>תמלול</h1>
       <div id="drop-area">
@@ -1148,76 +1043,49 @@
       </div>
     </div>
 
-    <div id="settings-modal" class="modal">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2 data-i18n="settingsHeader">הגדרות</h2>
-          <button class="close" id="close-settings">&times;</button>
-        </div>
-        <form id="settings-form">
-          <div class="settings-section">
-            <h3 data-i18n="settingsRunpod">הגדרות RunPod</h3>
-            <div class="form-group">
-              <label for="runpod-token" dir="ltr" data-i18n="runpodKeyLabel"
-                >RunPod API Key:</label
-              >
-              <input
-                type="password"
-                id="runpod-token"
-                name="runpod-token"
-                data-i18n="runpodKeyPlaceholder"
-                placeholder="הכנס את ה-API Key שלך"
-              />
-              <small class="form-help"
-                ><span data-i18n="runpodHelpText"
-                  >הזנת מפתח פרטי מאפשרת שימוש במשאבים פרטיים לעיבוד מהיר
-                  יותר.</span
-                ><br />
-                <a
-                  href="https://youtu.be/xr8RQRFERLs?si=ibHcP6m0wdUh-gHU"
-                  target="_blank"
-                  rel="noopener"
-                  data-i18n="runpodHelpWatch"
-                  >לצפייה בסרטון הסבר</a
-                ></small
-              >
-            </div>
-            <div
-              class="balance-container"
-              id="balance-container"
-              aria-live="polite"
-            >
-              <div class="balance-icon" aria-hidden="true">
-                <i data-lucide="credit-card"></i>
-              </div>
-              <div class="balance-text">
-                <span class="balance-label" data-i18n="balanceLabel">יתרה</span>
-                <span class="balance-amount" id="balance-amount">—</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="modal-buttons">
-            <button type="submit" class="btn btn-primary" data-i18n="save">
-              שמור
-            </button>
-            <button
-              type="button"
-              class="btn btn-secondary"
-              id="cancel-settings"
-            >
-              <span data-i18n="cancel">ביטול</span>
-            </button>
-            <button type="button" class="btn btn-secondary" id="clear-settings">
-              <span data-i18n="clear">נקה הגדרות</span>
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- i18n removed -->
     <script>
+      // Theme management
+      function toggleTheme() {
+        const html = document.documentElement
+        const currentTheme = html.getAttribute("data-theme")
+        const newTheme = currentTheme === "dark" ? "light" : "dark"
+
+        html.setAttribute("data-theme", newTheme)
+        localStorage.setItem("theme", newTheme)
+
+        // Update icon visibility
+        const sunIcon = document.getElementById("sun-icon")
+        const moonIcon = document.getElementById("moon-icon")
+
+        if (newTheme === "dark") {
+          sunIcon.style.display = "none"
+          moonIcon.style.display = "block"
+        } else {
+          sunIcon.style.display = "block"
+          moonIcon.style.display = "none"
+        }
+      }
+
+      // Initialize theme on page load
+      function initTheme() {
+        const savedTheme = localStorage.getItem("theme") || "light"
+        document.documentElement.setAttribute("data-theme", savedTheme)
+
+        const sunIcon = document.getElementById("sun-icon")
+        const moonIcon = document.getElementById("moon-icon")
+
+        if (savedTheme === "dark") {
+          sunIcon.style.display = "none"
+          moonIcon.style.display = "block"
+        } else {
+          sunIcon.style.display = "block"
+          moonIcon.style.display = "none"
+        }
+      }
+
+      // Initialize theme immediately (before DOMContentLoaded to prevent flash)
+      initTheme()
+
       // Initialize Lucide icons after DOM is parsed
       document.addEventListener("DOMContentLoaded", () => {
         if (window.lucide && typeof window.lucide.createIcons === "function") {
@@ -1259,33 +1127,23 @@
       const menuSrtBtn = document.getElementById("menu-srt")
       const menuDocxBtn = document.getElementById("menu-docx")
       const menuJsonBtn = document.getElementById("menu-json")
-      const settingsBtn = document.getElementById("settings-btn")
-      const settingsModal = document.getElementById("settings-modal")
-      const closeSettings = document.getElementById("close-settings")
-      const cancelSettings = document.getElementById("cancel-settings")
-      const clearSettings = document.getElementById("clear-settings")
-      const settingsForm = document.getElementById("settings-form")
-      const runpodTokenInput = document.getElementById("runpod-token")
 
       let selectedFile = null
       let selectedFiles = []
       let batchMode = false
-      const MAX_FILE_SIZE_REGULAR = 300 * 1024 * 1024 // 300MB in bytes
-      const MAX_FILE_SIZE_PRIVATE = 3 * 1024 * 1024 * 1024 // 3GB in bytes
+      const MAX_FILE_SIZE_BYTES = 300 * 1024 * 1024 // 300MB in bytes
       let transcriptionSegments = []
       let activeTranscription = false
       let currentJobId = null
 
       // Function to get current max file size based on private key usage
       function getMaxFileSize() {
-        const runpodToken = runpodTokenInput.value.trim()
-        return runpodToken ? MAX_FILE_SIZE_PRIVATE : MAX_FILE_SIZE_REGULAR
+        return MAX_FILE_SIZE_BYTES
       }
 
       // Function to get max file size text for display
       function getMaxFileSizeText() {
-        const runpodToken = runpodTokenInput.value.trim()
-        return runpodToken ? "3GB" : "300MB"
+        return "300MB"
       }
 
       let displaySettings = {
@@ -1352,328 +1210,66 @@
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
       }
 
-      function toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute("data-theme")
-        const newTheme = currentTheme === "dark" ? "light" : "dark"
-        document.documentElement.setAttribute("data-theme", newTheme)
-        localStorage.setItem("theme", newTheme)
-        updateThemeIcon(newTheme)
-      }
+      function handleFiles(files) {
+        const list = Array.from(files || [])
+        if (!list.length) return
 
-      function updateThemeIcon(theme) {
-        const sunIcon = document.getElementById("sun-icon")
-        const moonIcon = document.getElementById("moon-icon")
-        const isDark = theme === "dark"
-        sunIcon.style.display = isDark ? "none" : "inline-block"
-        moonIcon.style.display = isDark ? "inline-block" : "none"
-      }
-
-      // Load saved theme
-      const savedTheme = localStorage.getItem("theme") || "light"
-      document.documentElement.setAttribute("data-theme", savedTheme)
-      updateThemeIcon(savedTheme)
-
-      // Load saved display settings
-      const savedDisplaySettings = localStorage.getItem("displaySettings")
-      if (savedDisplaySettings) {
-        displaySettings = {
-          ...displaySettings,
-          ...JSON.parse(savedDisplaySettings),
-        }
-        // Ensure diarization is enabled by default when not present
-        if (!displaySettings.diarizationDisplay) {
-          displaySettings.diarizationDisplay = "enabled"
-        }
-      }
-
-      // Load settings from cookies and localStorage
-      function loadSettings() {
-        // Load RunPod token
-        const token = getCookie("runpod_token")
-        if (token) runpodTokenInput.value = token
-
-        // Load display settings from localStorage
-        const savedSettings = localStorage.getItem("displaySettings")
-        if (savedSettings) {
-          displaySettings = { ...displaySettings, ...JSON.parse(savedSettings) }
-          // Ensure diarizationDisplay has a default value if not present in saved settings
-          if (!displaySettings.diarizationDisplay) {
-            displaySettings.diarizationDisplay = "enabled"
+        if (list.length > 1) {
+          const maxSize = getMaxFileSize()
+          const maxText = getMaxFileSizeText()
+          const valid = []
+          for (const f of list) {
+            if (f.size > maxSize) {
+              showToast(
+                `הקובץ גדול מדי. הגודל המקסימלי המותר הוא ${maxText}: ${f.name}`,
+                "error"
+              )
+              continue
+            }
+            valid.push(f)
           }
-        }
-
-        // Update the toggle button icon/title based on current text format
-        updateTextFormatToggleUI()
-        updateTimestampsToggleUI()
-        updateDiarizationToggleUI()
-
-        // Update settings button appearance if credentials are saved
-        updateSettingsButtonIndicator()
-      }
-
-      // Update settings button to show if credentials are saved
-      function updateSettingsButtonIndicator() {
-        const token = getCookie("runpod_token")
-        const hasCredentials = token
-
-        if (hasCredentials) {
-          settingsBtn.style.color = "#4CAF50"
-          settingsBtn.title = "הגדרות (RunPod נשמר)"
-        } else {
-          settingsBtn.style.color = "#666"
-          settingsBtn.title = "הגדרות"
-        }
-      }
-
-      // Save settings to cookies and localStorage
-      async function saveSettings() {
-        // Persist display settings
-        const textFormat = displaySettings.textFormat || "continuous"
-        const timestampFormat = displaySettings.timestampFormat || "none"
-        const diarizationDisplay =
-          displaySettings.diarizationDisplay || "enabled"
-        displaySettings.textFormat = textFormat
-        displaySettings.timestampFormat = timestampFormat
-        displaySettings.diarizationDisplay = diarizationDisplay
-        localStorage.setItem("displaySettings", JSON.stringify(displaySettings))
-
-        if (transcriptionSegments.length > 0) {
-          updateTranscriptionDisplay()
-        }
-
-        const token = runpodTokenInput.value.trim()
-        if (!token) {
-          deleteCookie("runpod_token")
-          settingsModal.style.display = "none"
-          settingsModal.classList.remove("show")
-          updateSettingsButtonIndicator()
-          showToast("הגדרות נשמרו", "success")
+          if (!valid.length) {
+            selectedFiles = []
+            batchMode = false
+            transcribeBtn.disabled = true
+            fileName.textContent = ""
+            showToast("לא נמצאו קבצים תקינים", "error")
+            return
+          }
+          selectedFiles = valid
+          selectedFile = null
+          batchMode = true
+          transcribeBtn.disabled = false
+          document.getElementById("file-preview").classList.remove("show")
+          document.getElementById("file-name").style.display = "block"
+          document.getElementById(
+            "file-name"
+          ).textContent = `${valid.length} קבצים נבחרו`
+          showToast(`${valid.length} קבצים נבחרו בהצלחה`, "success")
           return
         }
 
-        const saveBtn = document.querySelector(
-          '#settings-form button[type="submit"]'
-        )
-        const originalText = saveBtn.textContent
-        saveBtn.textContent = "בודק..."
-        saveBtn.disabled = true
-
-        try {
-          const response = await fetch(
-            `/balance?runpod_token=${encodeURIComponent(token)}`
-          ).catch((e) => {
-            throw e
-          })
-          const data = await response.json()
-          if (!response.ok) {
-            showToast(
-              `שגיאה בבדיקת הגדרות RunPod:\n${response.status}: ${data.error}`,
-              "error"
-            )
-          } else {
-            const endpointResult = await checkAndCreateEndpoint(token)
-            if (endpointResult.success) {
-              setCookie("runpod_token", token, 365 * 24 * 60 * 60)
-              let successMessage = "הגדרות RunPod נשמרו"
-              if (endpointResult.needsWait)
-                successMessage += " ממתין ליצירת endpoint..."
-              showToast(successMessage, "success")
-              settingsModal.style.display = "none"
-              settingsModal.classList.remove("show")
-              updateSettingsButtonIndicator()
-              checkBalance()
-            } else {
-              showToast(
-                `שגיאת בדיקת endpoint\n${endpointResult.error || ""}`.trim(),
-                "error"
-              )
-            }
-          }
-        } catch (error) {
-          console.error("Error verifying credentials:", error)
-          if (
-            error.name === "TypeError" &&
-            (error.message || "").includes("Failed to fetch")
-          ) {
-            showToast(
-              "שגיאה: לא ניתן להתחבר לשרת RunPod.\nאנא בדוק את החיבור לאינטרנט ונסה שוב.",
-              "error"
-            )
-          } else {
-            showToast(`שגיאה בבדיקת הגדרות RunPod.\n${error.message}`, "error")
-          }
-        } finally {
-          saveBtn.textContent = originalText
-          saveBtn.disabled = false
-        }
-      }
-      function clearAllSettings() {
-        // Clear RunPod settings
-        deleteCookie("runpod_token")
-        runpodTokenInput.value = ""
-
-        // Clear display settings
-        displaySettings = {
-          textFormat: "continuous",
-          timestampFormat: "none",
-        }
-        localStorage.removeItem("displaySettings")
-
-        // Reset form controls to defaults (UI buttons will reflect state)
-        displaySettings.textFormat = "continuous"
-        displaySettings.timestampFormat = "none"
-        displaySettings.diarizationDisplay = "enabled"
-        updateTextFormatToggleUI()
-        updateTimestampsToggleUI()
-        updateDiarizationToggleUI()
-
-        // Update display if there are results
-        if (transcriptionSegments.length > 0) {
-          updateTranscriptionDisplay()
-        }
-
-        showToast("כל ההגדרות נמחקו בהצלחה", "success")
-        settingsModal.style.display = "none"
-        settingsModal.classList.remove("show")
-        updateSettingsButtonIndicator()
-
-        // Hide balance container when credentials are cleared
-        const balanceContainer = document.getElementById("balance-container")
-        balanceContainer.classList.remove("visible")
-      }
-
-      // Cookie utility functions
-      function setCookie(name, value, days) {
-        const expires = new Date()
-        expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000)
-        document.cookie =
-          name + "=" + value + ";expires=" + expires.toUTCString() + ";path=/"
-      }
-
-      function getCookie(name) {
-        const nameEQ = name + "="
-        const ca = document.cookie.split(";")
-        for (let i = 0; i < ca.length; i++) {
-          let c = ca[i]
-          while (c.charAt(0) === " ") c = c.substring(1, c.length)
-          if (c.indexOf(nameEQ) === 0)
-            return c.substring(nameEQ.length, c.length)
-        }
-        return null
-      }
-
-      function deleteCookie(name) {
-        document.cookie =
-          name + "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;"
-      }
-
-      // Check for RunPod credentials and fetch balance via backend API
-      async function checkBalance() {
-        const token = getCookie("runpod_token")
-
-        if (token) {
-          const balanceContainer = document.getElementById("balance-container")
-          const balanceAmount = document.getElementById("balance-amount")
-
-          balanceContainer.classList.add("visible")
-          balanceAmount.textContent = "טוען..."
-          balanceAmount.className = "balance-amount balance-loading"
-
-          try {
-            const response = await fetch(
-              `/balance?runpod_token=${encodeURIComponent(token)}`
-            )
-            const data = await response.json()
-
-            if (response.ok && data.clientBalance !== "N/A") {
-              const formattedBalance = parseFloat(data.clientBalance).toFixed(2)
-              balanceAmount.textContent = `$${formattedBalance}`
-              balanceAmount.className = "balance-amount"
-            } else {
-              balanceAmount.textContent = "שגיאה בטעינת יתרה"
-              balanceAmount.className = "balance-amount"
-            }
-          } catch (error) {
-            console.error("Balance fetch error:", error)
-            balanceAmount.textContent = "שגיאה בטעינת יתרה"
-            balanceAmount.className = "balance-amount"
-          }
+        // Single-file mode
+        selectedFile = list[0]
+        const maxFileSize = getMaxFileSize()
+        const maxFileSizeText = getMaxFileSizeText()
+        if (selectedFile.size > maxFileSize) {
+          showToast(
+            `הקובץ גדול מדי. הגודל המקסימלי המותר הוא ${maxFileSizeText}`,
+            "error"
+          )
+          selectedFile = null
+          transcribeBtn.disabled = true
+          fileName.textContent = ""
+        } else {
+          selectedFiles = []
+          batchMode = false
+          transcribeBtn.disabled = false
+          showFilePreview(selectedFile)
+          showToast("קובץ נבחר בהצלחה", "success")
         }
       }
 
-      // Check and create endpoint if needed (called automatically when saving settings)
-      async function checkAndCreateEndpoint(token) {
-        try {
-          const response = await fetch("/check_endpoint", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              runpod_token: token,
-            }),
-          })
-
-          const data = await response.json()
-
-          if (response.ok) {
-            if (data.action === "up_to_date") {
-              console.log("Endpoint is up to date")
-              return { success: true, needsWait: false }
-            } else if (data.action === "updated") {
-              console.log("Endpoint was updated")
-              return { success: true, needsWait: true }
-            } else if (data.action === "created") {
-              console.log("New endpoint was created")
-              return { success: true, needsWait: true }
-            }
-          } else {
-            console.error("Endpoint check failed:", data.error)
-            return { success: false, error: data.error }
-          }
-        } catch (error) {
-          console.error("Error checking endpoint:", error)
-          return { success: false, error: "שגיאה בבדיקת ה-endpoint" }
-        }
-      }
-
-      // Initialize settings button indicator on page load
-      updateSettingsButtonIndicator()
-
-      // Check balance on page load
-      checkBalance()
-
-      // Settings modal handlers
-      settingsBtn.addEventListener("click", () => {
-        settingsModal.style.display = "block"
-        settingsModal.classList.add("show")
-        loadSettings()
-      })
-
-      closeSettings.addEventListener("click", () => {
-        settingsModal.style.display = "none"
-        settingsModal.classList.remove("show")
-      })
-
-      cancelSettings.addEventListener("click", () => {
-        settingsModal.style.display = "none"
-        settingsModal.classList.remove("show")
-      })
-
-      clearSettings.addEventListener("click", clearAllSettings)
-
-      settingsForm.addEventListener("submit", async (e) => {
-        e.preventDefault()
-        await saveSettings()
-      })
-
-      // Close modal when clicking outside
-      window.addEventListener("click", (e) => {
-        if (e.target === settingsModal) {
-          settingsModal.style.display = "none"
-          settingsModal.classList.remove("show")
-        }
-      })
       ;["dragenter", "dragover", "dragleave", "drop"].forEach((eventName) => {
         dropArea.addEventListener(eventName, preventDefaults, false)
       })
@@ -1702,11 +1298,7 @@
 
       async function handleDrop(e) {
         const dt = e.dataTransfer
-        // Allow dropping multiple files/folders only with private key
-        const isPrivate =
-          (runpodTokenInput && runpodTokenInput.value.trim()) ||
-          getCookie("runpod_token")
-        if (isPrivate && dt.items && dt.items.length) {
+        if (dt.items && dt.items.length) {
           const files = await extractFilesFromDataTransfer(dt)
           handleFiles(files)
         } else {
@@ -1772,14 +1364,10 @@
       })
 
       function handleFiles(files) {
-        const isPrivate =
-          (runpodTokenInput && runpodTokenInput.value.trim()) ||
-          getCookie("runpod_token")
         const list = Array.from(files || [])
         if (!list.length) return
 
-        if (isPrivate && list.length > 1) {
-          // Multi-file mode (private key only)
+        if (list.length > 1) {
           const maxSize = getMaxFileSize()
           const maxText = getMaxFileSizeText()
           const valid = []
@@ -1797,6 +1385,8 @@
             selectedFiles = []
             batchMode = false
             transcribeBtn.disabled = true
+            fileName.textContent = ""
+            showToast("לא נמצאו קבצים תקינים", "error")
             return
           }
           selectedFiles = valid
@@ -1809,39 +1399,31 @@
             "file-name"
           ).textContent = `${valid.length} קבצים נבחרו`
           showToast(`${valid.length} קבצים נבחרו בהצלחה`, "success")
+          return
+        }
+
+        selectedFile = list[0]
+        const maxFileSize = getMaxFileSize()
+        const maxFileSizeText = getMaxFileSizeText()
+        if (selectedFile.size > maxFileSize) {
+          showToast(
+            `הקובץ גדול מדי. הגודל המקסימלי המותר הוא ${maxFileSizeText}`,
+            "error"
+          )
+          selectedFile = null
+          transcribeBtn.disabled = true
+          fileName.textContent = ""
         } else {
-          // Single-file mode
-          selectedFile = list[0]
-          const maxFileSize = getMaxFileSize()
-          const maxFileSizeText = getMaxFileSizeText()
-          if (selectedFile.size > maxFileSize) {
-            showToast(
-              `הקובץ גדול מדי. הגודל המקסימלי המותר הוא ${maxFileSizeText}`,
-              "error"
-            )
-            selectedFile = null
-            transcribeBtn.disabled = true
-            fileName.textContent = ""
-          } else {
-            selectedFiles = []
-            batchMode = false
-            transcribeBtn.disabled = false
-            showFilePreview(selectedFile)
-            showToast("קובץ נבחר בהצלחה", "success")
-          }
+          selectedFiles = []
+          batchMode = false
+          transcribeBtn.disabled = false
+          showFilePreview(selectedFile)
+          showToast("קובץ נבחר בהצלחה", "success")
         }
       }
 
       dropArea.addEventListener("click", () => {
-        const isPrivate =
-          (runpodTokenInput && runpodTokenInput.value.trim()) ||
-          getCookie("runpod_token")
-        if (isPrivate) {
-          fileInput.setAttribute("multiple", "multiple")
-        } else {
-          fileInput.removeAttribute("multiple")
-        }
-        // Keep chooser as files-only; folders are supported via drag & drop
+        fileInput.removeAttribute("multiple")
         fileInput.click()
       })
 
@@ -1859,19 +1441,10 @@
         const formData = new FormData()
         formData.append("file", selectedFile)
 
-        // Add RunPod credentials if available
-        const token = getCookie("runpod_token")
-        if (token) {
-          formData.append("runpod_token", token)
-          transcriptionArea.innerHTML = "משתמש ב-RunPod"
-        }
-
         transcribeBtn.disabled = true
         progressContainer.style.display = "block"
         progressBar.style.width = "0%"
-        if (!token) {
-          transcriptionArea.innerHTML = "מעלה..."
-        }
+        transcriptionArea.innerHTML = "מעלה..."
         updateTranscriptionDirectionUI()
         copyBtn.disabled = true
         downloadBtn.disabled = true
@@ -1945,8 +1518,6 @@
         exportWordsBtn.disabled = true
         downloadMenuBtn.disabled = true
 
-        const token = getCookie("runpod_token")
-
         for (let i = 0; i < selectedFiles.length; i++) {
           const file = selectedFiles[i]
           transcriptionArea.innerHTML = `מעלה ${i + 1}/${
@@ -1955,7 +1526,6 @@
 
           const formData = new FormData()
           formData.append("file", file)
-          if (token) formData.append("runpod_token", token)
 
           let jobId = null
           try {
@@ -2230,29 +1800,9 @@
               }
 
               if (data.queue_position) {
-                let statusMessage = `בתור במקום ${data.queue_position}. זמן משוער להתחלה: ${data.time_ahead}`
-                if (data.job_type) {
-                  let jobTypeText
-                  switch (data.job_type) {
-                    case "short":
-                      jobTypeText = "קצרה"
-                      break
-                    case "long":
-                      jobTypeText = "ארוכה"
-                      break
-                    case "private":
-                      jobTypeText = "פרטית"
-                      break
-                    default:
-                      jobTypeText = data.job_type
-                  }
-                  statusMessage += `, סוג עבודה: ${jobTypeText}`
-                }
-                statusMessage += `\n\nממתין לעיבוד...`
-                transcriptionArea.innerHTML = statusMessage.replace(
-                  /\n/g,
-                  "<br>"
-                )
+                const statusMessage = `בתור במקום ${data.queue_position}. זמן משוער להתחלה: ${data.time_ahead}`
+                transcriptionArea.innerHTML =
+                  `${statusMessage}\n\nממתין לעיבוד...`.replace(/\n/g, "<br>")
                 progressBar.style.width = "0%"
                 activeTranscription = true
                 setTimeout(poll, pollInterval)

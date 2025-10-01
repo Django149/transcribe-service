@@ -1,286 +1,89 @@
-from fastapi import (
-    FastAPI,
-    Request,
-    Response,
-    HTTPException,
-    Depends,
-    Form,
-    File,
-    UploadFile,
-    status
-)
-from werkzeug.utils import secure_filename
-import aiohttp
-from fastapi.responses import JSONResponse, FileResponse, RedirectResponse, HTMLResponse
+import asyncio
+import argparse
+import logging
+import os
+import tempfile
+import time
+import uuid
+from collections import deque
+from datetime import datetime, timedelta
+from logging.handlers import RotatingFileHandler
+from typing import Any, Deque, Dict, List, Optional
+
+import dotenv
+import ffmpeg
+import ivrit
+import magic
+import posthog
+import uvicorn
+from fastapi import FastAPI, File, Request, UploadFile
+from fastapi.concurrency import run_in_threadpool
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.security import HTTPBearer
-import uvicorn
-import os
-import math
-import time
-import json
-import uuid
-import box
-import dotenv
-import magic
-import random
-import tempfile
-import asyncio
-import queue
-import logging
-from logging.handlers import RotatingFileHandler
-from datetime import datetime, timedelta
-from urllib.parse import urljoin, urlencode
-from functools import wraps
-from typing import Optional
-from contextlib import asynccontextmanager
-import dataclasses
+from werkzeug.utils import secure_filename
 
-import traceback
-
-import posthog
-import ffmpeg
-import base64
-import argparse
-import re
-import ivrit
-import json as _json
 
 dotenv.load_dotenv()
 
-# Parse CLI arguments for configuration
-parser = argparse.ArgumentParser(description='Transcription service with rate limiting')
-parser.add_argument('--max-minutes-per-week', type=int, default=180, help='Maximum credit grant in minutes per week (default: 420)')
-parser.add_argument('--staging', action='store_true', help='Enable staging mode')
-parser.add_argument('--hiatus', action='store_true', help='Enable hiatus mode')
-parser.add_argument('--verbose', action='store_true', help='Enable verbose logging')
-parser.add_argument('--dev', action='store_true', help='Enable development mode')
-parser.add_argument('--dev-user-email', help='User email for development mode')
-args, unknown = parser.parse_known_args()
-
-# Rate limiting configuration from CLI arguments
-MAX_MINUTES_PER_WEEK = args.max_minutes_per_week  # Maximum credit grant per week
-REPLENISH_RATE_MINUTES_PER_DAY = MAX_MINUTES_PER_WEEK / 7  # Automatically derive daily replenish rate
-
-
+parser = argparse.ArgumentParser(description="Local transcription service")
+parser.add_argument("--staging", action="store_true", help="Enable staging mode")
+parser.add_argument("--hiatus", action="store_true", help="Enable hiatus mode")
+parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
+parser.add_argument("--dev", action="store_true", help="Enable development mode")
+args, _ = parser.parse_known_args()
 
 in_dev = args.staging or args.dev
 in_hiatus_mode = args.hiatus
 verbose = args.verbose
 
- # Model configuration (single model)
 MODEL_NAME = os.environ.get("MODEL_NAME", "ivrit-ai/whisper-large-v3-turbo-ct2")
+MODEL_DEVICE = os.environ.get("MODEL_DEVICE")
+ESTIMATED_REALTIME_FACTOR = float(os.environ.get("LOCAL_TRANSCRIBE_RTF", "2.5"))
+MAX_AUDIO_DURATION_IN_HOURS = float(os.environ.get("MAX_AUDIO_DURATION_IN_HOURS", "20"))
+MAX_FILE_SIZE_BYTES = int(os.environ.get("MAX_FILE_SIZE_BYTES", str(300 * 1024 * 1024)))
+RESULT_EXPIRY_MINUTES = int(os.environ.get("RESULT_EXPIRY_MINUTES", "60"))
+FILE_CHUNK_SIZE = 16 * 1024 * 1024  # 16MB
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Handle application startup and shutdown"""
-    global queue_locks
-    
-    # Startup
-    # Initialize locks
-    queue_locks[SHORT] = asyncio.Lock()
-    queue_locks[LONG] = asyncio.Lock()
-    queue_locks[PRIVATE] = asyncio.Lock()
-    
-    # Start background event loop
-    asyncio.create_task(event_loop())
-    
-    yield
 
-# Create FastAPI app
-app = FastAPI(title="Transcription Service", version="1.0.0", lifespan=lifespan)
+def _env_flag(name: str, default: str = "0") -> bool:
+    return os.environ.get(name, default).strip().lower() in {"1", "true", "yes", "on"}
 
-# Mount static files
+
+ENABLE_DIARIZATION = _env_flag("ENABLE_DIARIZATION", "1")
+ENABLE_WORD_TIMESTAMPS = _env_flag("ENABLE_WORD_TIMESTAMPS", "1")
+
+app = FastAPI(title="Transcription Service", version="2.0.0")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Configure logging
 logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(message)s")
 logger = logging.getLogger(__name__)
+if verbose:
+    logger.setLevel(logging.DEBUG)
 
-# Configure file logging
 file_handler = RotatingFileHandler(
-    filename="app.log", maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"  # 10MB
+    filename="app.log", maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"
 )
 file_handler.setFormatter(logging.Formatter("[%(asctime)s] %(message)s"))
 logger.addHandler(file_handler)
 
-# Templates
 templates = Jinja2Templates(directory="templates")
 
-# Session management (simplified for FastAPI)
-sessions = {}
-
-
-
-def get_session_id(request: Request) -> str:
-    """Get or create session ID from request"""
-    session_id = request.cookies.get("session_id")
-    if not session_id:
-        session_id = str(uuid.uuid4())
-    return session_id
-
-
-
-def get_user_email(request: Request) -> Optional[str]:
-    """Get user email from session"""
-    session_id = get_session_id(request)
-    return sessions.get(session_id, {}).get("user_email")
-
-def set_user_email(request: Request, email: str) -> str:
-    """Set user email in session and return session ID"""
-    session_id = get_session_id(request)
-    if session_id not in sessions:
-        sessions[session_id] = {}
-    sessions[session_id]["user_email"] = email
-    return session_id
-
-# Google OAuth configuration
-GOOGLE_CLIENT_ID = os.environ["GOOGLE_CLIENT_ID"]
-GOOGLE_CLIENT_SECRET = os.environ["GOOGLE_CLIENT_SECRET"]
-GOOGLE_REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI", "https://transcribe.ivrit.ai/login/authorized")
-
-
-
-def log_message(message):
-    logger.info(f"{message}")
-
-# PostHog configuration
 ph = None
 if "POSTHOG_API_KEY" in os.environ:
     ph = posthog.Posthog(project_api_key=os.environ["POSTHOG_API_KEY"], host="https://us.i.posthog.com")
 
-def capture_event(distinct_id, event, props=None):
-    global ph
+def log_message(message: str) -> None:
+    logger.info(message)
+
+
+def capture_event(distinct_id: str, event: str, props: Optional[Dict[str, Any]] = None) -> None:
     if not ph:
         return
     props = {} if not props else props
     props["source"] = "transcribe.ivrit.ai"
     ph.capture(distinct_id=distinct_id, event=event, properties=props)
 
-# Queue type constants
-SHORT = "short"
-LONG = "long"
-PRIVATE = "private"
-
-MAX_PARALLEL_SHORT_JOBS = 1
-MAX_PARALLEL_LONG_JOBS = 1
-MAX_PARALLEL_PRIVATE_JOBS = 1000
-MAX_QUEUED_JOBS = 20
-MAX_QUEUED_PRIVATE_JOBS = 5000
-SHORT_JOB_THRESHOLD = 20 * 60
-JOB_TIMEOUT = 1 * 60
-
-SPEEDUP_FACTOR = 20
-MAX_AUDIO_DURATION_IN_HOURS = 20
-EXECUTION_TIMEOUT_MS = int(MAX_AUDIO_DURATION_IN_HOURS * 3600 * 1000 / SPEEDUP_FACTOR)
-
-# Dictionary to store temporary file paths
-temp_files = {}
-
-# Programmatic queue management
-queues = {
-    SHORT: queue.Queue(maxsize=MAX_QUEUED_JOBS),
-    LONG: queue.Queue(maxsize=MAX_QUEUED_JOBS),
-    PRIVATE: queue.Queue(maxsize=MAX_QUEUED_PRIVATE_JOBS)
-}
-
-# Programmatic running jobs management
-running_jobs = {
-    SHORT: {},
-    LONG: {},
-    PRIVATE: {}
-}
-
-# Maximum parallel jobs per queue type
-max_parallel_jobs = {
-    SHORT: MAX_PARALLEL_SHORT_JOBS,
-    LONG: MAX_PARALLEL_LONG_JOBS,
-    PRIVATE: MAX_PARALLEL_PRIVATE_JOBS
-}
-
-# Keep track of job results
-job_results = {}
-
-# Per-queue locks for thread-safe operations
-queue_locks = {
-    SHORT: None,
-    LONG: None,
-    PRIVATE: None
-}
-
-# Dictionary to keep track of user's active jobs
-user_jobs = {}
-
-# Dictionary to keep track of last access time for each job
-job_last_accessed = {}
-
-# Dictionary to store user rate limiting buckets
-user_buckets = {}
-
-
-
-
-
-class LeakyBucket:
-    def __init__(self, max_minutes_per_week):
-        self.max_seconds = max_minutes_per_week * 60  # Convert to seconds
-        self.seconds_remaining = max_minutes_per_week * 60
-        self.last_update = time.time()
-
-        # Calculate fill rate (per second) based on daily replenish rate
-        self.time_fill_rate = (REPLENISH_RATE_MINUTES_PER_DAY * 60) / (24 * 3600)  # Convert daily rate to per-second
-
-    def update(self):
-        """Update bucket based on elapsed time."""
-        now = time.time()
-        elapsed = now - self.last_update
-        self.last_update = now
-
-        # Add resources based on fill rate
-        self.seconds_remaining = min(self.max_seconds, self.seconds_remaining + self.time_fill_rate * elapsed)
-
-    def eta_to_credits(self, total_seconds):
-        """
-        Returns 0 if allowance is already available, otherwise seconds until credits are available,
-        or infinity if required credits are more than the bucket's max.
-        """
-        self.update()
-        
-        # If required credits exceed bucket capacity, return infinity
-        if total_seconds > self.max_seconds:
-            return float('inf')
-        
-        # If we already have enough credits, return 0
-        if self.seconds_remaining >= total_seconds:
-            return 0
-        
-        # Calculate how many seconds we need to wait for sufficient credits
-        needed_seconds = total_seconds - self.seconds_remaining
-        wait_time = needed_seconds / self.time_fill_rate
-        
-        return wait_time
-
-    def consume(self, duration_seconds):
-        """Consume resources for transcription."""
-        self.update()
-        self.seconds_remaining -= duration_seconds
-        return self.seconds_remaining > 0
-
-    def get_remaining_minutes(self):
-        """Get remaining minutes in the bucket."""
-        self.update()
-        return self.seconds_remaining / 60
-
-    def get_remaining_seconds(self):
-        """Get remaining seconds in the bucket."""
-        self.update()
-        return self.seconds_remaining
-
-    def is_fully_replenished(self):
-        """Check if the bucket is fully replenished."""
-        self.update()
-        return self.seconds_remaining >= self.max_seconds
 
 ffmpeg_supported_mimes = [
     "video/",
@@ -291,1101 +94,392 @@ ffmpeg_supported_mimes = [
 ]
 
 
-def is_ffmpeg_supported_mimetype(file_mime):
+def is_ffmpeg_supported_mimetype(file_mime: str) -> bool:
     return any(file_mime.startswith(supported_mime) for supported_mime in ffmpeg_supported_mimes)
 
 
-def get_media_duration(file_path):
+def get_media_duration(file_path: str) -> Optional[float]:
     try:
         probe = ffmpeg.probe(file_path)
         audio_info = next(s for s in probe["streams"] if s["codec_type"] == "audio")
-        return float(audio_info["duration"])
-    except ffmpeg.Error as e:
-        print(f"Error: {e.stderr}")
+        return float(audio_info.get("duration", 0.0))
+    except (ffmpeg.Error, StopIteration) as error:
+        log_message(f"Error getting media duration: {error}")
         return None
 
 
-def get_user_quota(user_email):
-    """Get or create a rate limiting bucket for a user."""
-    if user_email not in user_buckets:
-        user_buckets[user_email] = LeakyBucket(MAX_MINUTES_PER_WEEK)
-    return user_buckets[user_email]
+def clean_some_unicode_from_text(text: str) -> str:
+    chars_to_remove = "\u061C\u200B\u200C\u200D\u200E\u200F\u202A\u202B\u202C\u202D\u202E\u2066\u2067\u2068\u2069\uFEFF"
+    return text.translate({ord(c): None for c in chars_to_remove})
 
 
-async def calculate_queue_time(queue_to_use, running_jobs, exclude_last=False):
-    """
-    Calculate the estimated time remaining for jobs in queue and running jobs
-
-    Args:
-        queue_to_use: Queue to check
-        running_jobs: Dictionary of currently running jobs
-        exclude_last: Whether to exclude the last job in queue from calculation
-
-    Returns:
-        time_ahead_str: Formatted string of estimated time (HH:MM:SS)
-    """
-    # Skip queue time calculations for private queue
-    if queue_to_use == queues[PRIVATE]:
-        return "00:00:00"
-    
-    # Determine which lock to use based on the queue
-    queue_type = None
-    for qt, q in queues.items():
-        if q == queue_to_use:
-            queue_type = qt
-            break
-    
-    if queue_type is None:
-        return "00:00:00"
-    time_ahead = 0
-    
-
-    # Add remaining time of currently running jobs
-    for running_job_id, running_job in running_jobs.items():
-        if running_job_id in job_results:
-            # Get progress of the running job
-            progress = job_results[running_job_id]["progress"]
-            # Add only the remaining duration
-            remaining_duration = running_job.duration * (1 - progress)
-            time_ahead += remaining_duration
-        else:
-            # If no progress info yet, add full duration
-            time_ahead += running_job.duration
-
-    # Add duration of queued jobs
-    queue_jobs = list(queue_to_use.queue)
-    if exclude_last and queue_jobs:
-        queue_jobs = queue_jobs[:-1]  # Exclude the last job
-
-    time_ahead += sum(job.duration for job in queue_jobs)
-
-    # Apply speedup factor
-    time_ahead /= SPEEDUP_FACTOR
-
-    # Convert time_ahead to HH:MM:SS format
-    return str(timedelta(seconds=int(time_ahead)))
+def human_readable_size(num_bytes: int) -> str:
+    for unit in ["Bytes", "KB", "MB", "GB", "TB"]:
+        if num_bytes < 1024 or unit == "TB":
+            return f"{num_bytes:.0f} {unit}"
+        num_bytes /= 1024
+    return f"{num_bytes:.0f} TB"
 
 
-async def queue_job(job_id, user_email, filename, duration, runpod_token=""):
-    # Try to add the job to the queue
-    log_message(f"{user_email}: Queuing job {job_id}...")
+temp_files: Dict[str, str] = {}
+job_results: Dict[str, Dict[str, Any]] = {}
+pending_jobs: Deque[str] = deque()
+model_lock = asyncio.Lock()
+transcribe_lock = asyncio.Lock()
+model_instance: Optional[Any] = None
+current_job_id: Optional[str] = None
 
-    # Check if user already has a job queued or running
-    if user_email in user_jobs:
-        return False, JSONResponse({"error": "יש לך כבר עבודה בתור או בביצוע. אנא המתן לסיומה לפני העלאת קובץ חדש."}, status_code=400)
 
-    # Check rate limits only if not using custom RunPod credentials
-    custom_runpod_credentials = bool(runpod_token)
-    if not custom_runpod_credentials:
-        user_bucket = get_user_quota(user_email)
-        eta_seconds = user_bucket.eta_to_credits(duration)
-        
-        if eta_seconds > 0:
-            remaining_minutes = user_bucket.get_remaining_minutes()
-            log_message(f"{user_email}: Job queuing rate limited for user {user_email}. Requested: {duration/60:.1f}min, Remaining: {remaining_minutes:.1f}min")
-            
-            if eta_seconds == float('inf'):
-                error_msg = f"הקובץ המבוקש גדול מדי ועובר את מגבלת השימוש החופשי הכוללת. אנא השתמש במפתח פרטי בעזרת ההוראות בסרטון הבא: https://youtu.be/xr8RQRFERLs"
-            else:
-                wait_minutes = math.ceil(eta_seconds / 60)
-                error_msg = f"עברת את מגבלת השימוש החופשי. אנא המתן {wait_minutes} דקות לפני העלאת קובץ חדש, או השתמש במפתח פרטי בעזרת ההוראות בסרטון הבא: https://youtu.be/xr8RQRFERLs"
-            
-            return False, JSONResponse({"error": error_msg}, status_code=429)
+def cleanup_temp_file(job_id: str) -> None:
+    path = temp_files.pop(job_id, None)
+    if path and os.path.exists(path):
+        try:
+            os.unlink(path)
+        except OSError as error:
+            log_message(f"Error deleting temporary file {path}: {error}")
 
-    try:
-        job_desc = box.Box()
-        job_desc.qtime = time.time()
-        job_desc.utime = time.time()
-        job_desc.id = job_id
-        job_desc.filename = filename
-        job_desc.user_email = user_email
-        job_desc.duration = duration
-        job_desc.runpod_token = runpod_token
-        job_desc.uses_custom_runpod = bool(runpod_token)
 
-        # Determine queue type based on job characteristics
-        if job_desc.uses_custom_runpod:
-            # Private queue for jobs with custom RunPod credentials
-            queue_to_use = queues[PRIVATE]
-            job_type = PRIVATE
-            running_jobs_to_update = running_jobs[PRIVATE]
-        elif duration <= SHORT_JOB_THRESHOLD:
-            queue_to_use = queues[SHORT]
-            job_type = SHORT
-            running_jobs_to_update = running_jobs[SHORT]
-        else:
-            queue_to_use = queues[LONG]
-            job_type = LONG
-            running_jobs_to_update = running_jobs[LONG]
-
-        job_desc.job_type = job_type
-
-        # Use the appropriate queue lock
-        async with queue_locks[job_type]:
-            queue_depth = queue_to_use.qsize()
-            queue_to_use.put_nowait(job_desc)
-
-            # Calculate time ahead only for the relevant queue
-            time_ahead_str = await calculate_queue_time(queue_to_use, running_jobs_to_update, exclude_last=True)
-
-            # Add job to user's active jobs
-            user_jobs[user_email] = job_id
-
-            # Set initial access time
-            job_last_accessed[job_id] = time.time()
-
-            capture_event(job_id, "job-queued", {"user": user_email, "queue-depth": queue_depth, "job-type": job_type, "custom-runpod": job_desc.uses_custom_runpod})
-
-            log_message(
-                f"{user_email}: Job queued successfully: {job_id}, queue depth: {queue_depth}, job type: {job_type}, job desc: {job_desc}"
-            )
-
-            return True, (
-                JSONResponse({"job_id": job_id, "queued": queue_depth, "job_type": job_type, "time_ahead": time_ahead_str})
-            )
-    except queue.Full:
-        capture_event(job_id, "job-queue-failed", {"queue-depth": queue_depth, "job-type": job_type})
-
-        log_message(f"{user_email}: Job queuing failed: {job_id}")
-
+def cleanup_finished_jobs() -> None:
+    if not job_results:
+        return
+    expiry_time = datetime.now() - timedelta(minutes=RESULT_EXPIRY_MINUTES)
+    to_delete = [jid for jid, data in job_results.items() if data.get("completion_time") and data["completion_time"] < expiry_time]
+    for job_id in to_delete:
         cleanup_temp_file(job_id)
-        return False, JSONResponse({"error": "השרת עמוס כרגע. אנא נסה שוב מאוחר יותר."}, status_code=503)
+        job_results.pop(job_id, None)
+
+
+def normalize_segments(raw_segments: Optional[List[Any]]) -> List[Dict[str, Any]]:
+    if not raw_segments:
+        return []
+
+    def get_attr(item: Any, key: str, default: Any = None) -> Any:
+        if isinstance(item, dict):
+            return item.get(key, default)
+        return getattr(item, key, default)
+
+    normalized: List[Dict[str, Any]] = []
+    for segment in raw_segments:
+        start = float(get_attr(segment, "start", 0.0) or 0.0)
+        end = float(get_attr(segment, "end", start) or start)
+        speakers = get_attr(segment, "speakers", None) or []
+        speaker = get_attr(segment, "speaker", None)
+        if not speakers and speaker is not None:
+            speakers = [f"SPEAKER_{int(speaker)}" if isinstance(speaker, (int, float)) else str(speaker)]
+
+        words_data = get_attr(segment, "words", None) or []
+        normalized_words: List[Dict[str, Any]] = []
+        for word in words_data:
+            word_start = float(get_attr(word, "start", start) or start)
+            word_end = float(get_attr(word, "end", word_start) or word_start)
+            word_text = get_attr(word, "word", None) or get_attr(word, "text", "")
+            normalized_words.append(
+                {
+                    "start": word_start,
+                    "end": word_end,
+                    "word": clean_some_unicode_from_text(str(word_text)),
+                    "confidence": get_attr(word, "confidence", None),
+                }
+            )
+
+        normalized.append(
+            {
+                "id": get_attr(segment, "id", None),
+                "start": start,
+                "end": end,
+                "text": clean_some_unicode_from_text(str(get_attr(segment, "text", ""))),
+                "speakers": speakers,
+                "words": normalized_words,
+            }
+        )
+
+    return normalized
+
+
+async def get_transcription_model():
+    global model_instance
+    if model_instance is not None:
+        return model_instance
+
+    async with model_lock:
+        if model_instance is None:
+            def load_model() -> Any:
+                kwargs: Dict[str, Any] = {"engine": "faster-whisper", "model": MODEL_NAME}
+                if MODEL_DEVICE:
+                    kwargs["device"] = MODEL_DEVICE
+                return ivrit.load_model(**kwargs)
+
+            model_instance = await run_in_threadpool(load_model)
+            log_message(f"Loaded ivrit model {MODEL_NAME} (device={MODEL_DEVICE or 'auto'})")
+    return model_instance
+
+
+def estimate_queue_eta(job_id: str) -> str:
+    seconds = 0.0
+    if current_job_id and current_job_id != job_id:
+        active_job = job_results.get(current_job_id)
+        if active_job and active_job.get("status") == "running":
+            duration = float(active_job.get("duration") or 0.0)
+            start_time = active_job.get("start_time")
+            if start_time:
+                elapsed = time.time() - start_time
+                total = max(duration / ESTIMATED_REALTIME_FACTOR, 1.0)
+                seconds += max(total - elapsed, 0.0)
+
+    if job_id in pending_jobs:
+        ahead = list(pending_jobs)
+        index = ahead.index(job_id)
+        for queued_job_id in ahead[:index]:
+            queued_job = job_results.get(queued_job_id)
+            if queued_job:
+                duration = float(queued_job.get("duration") or 0.0)
+                seconds += max(duration / ESTIMATED_REALTIME_FACTOR, 1.0)
+
+    return str(timedelta(seconds=int(max(seconds, 0))))
+
+
+def update_running_progress(job_data: Dict[str, Any]) -> float:
+    start_time = job_data.get("start_time")
+    duration = float(job_data.get("duration") or 0.0)
+    if not start_time or duration <= 0:
+        return job_data.get("progress", 0.0)
+
+    elapsed = time.time() - start_time
+    estimated_total = max(duration / ESTIMATED_REALTIME_FACTOR, 1.0)
+    progress = min(elapsed / estimated_total, 0.95)
+    job_data["progress"] = progress
+    return progress
+
+
+async def transcribe_job(job_id: str) -> None:
+    global current_job_id
+    job_data = job_results.get(job_id)
+    if not job_data:
+        return
+
+    async with transcribe_lock:
+        job_data["status"] = "running"
+        job_data["start_time"] = time.time()
+        try:
+            pending_jobs.remove(job_id)
+        except ValueError:
+            pass
+
+        current_job_id = job_id
+        capture_event(
+            job_id,
+            "transcribe-start",
+            {
+                "filename": job_data.get("filename"),
+                "queue_wait_seconds": job_data["start_time"] - job_data["created_at"].timestamp(),
+                "duration_seconds": job_data.get("duration"),
+            },
+        )
+
+        try:
+            model = await get_transcription_model()
+
+            def run_transcription() -> Any:
+                kwargs: Dict[str, Any] = {
+                    "path": temp_files[job_id],
+                    "language": "he",
+                    "verbose": True
+                }
+                if ENABLE_DIARIZATION:
+                    kwargs["diarize"] = True
+                    # kwargs["diarization_args"] = {
+                    #     "engine": "pyannote",
+                    # }
+                if ENABLE_WORD_TIMESTAMPS:
+                    kwargs["word_timestamps"] = True
+                try:
+                    return model.transcribe(**kwargs)
+                except TypeError:
+                    kwargs.pop("diarize", None)
+                    kwargs.pop("word_timestamps", None)
+                    return model.transcribe(**kwargs)
+
+            result = await run_in_threadpool(run_transcription)
+            segments_source = None
+            full_text = ""
+            if isinstance(result, dict):
+                segments_source = result.get("segments")
+                full_text = str(result.get("text", ""))
+            else:
+                segments_source = getattr(result, "segments", None)
+                full_text = str(getattr(result, "text", ""))
+
+            job_data["results"] = normalize_segments(segments_source)
+            job_data["text"] = clean_some_unicode_from_text(full_text)
+            job_data["progress"] = 1.0
+            job_data["status"] = "done"
+            job_data["completion_time"] = datetime.now()
+            capture_event(
+                job_id,
+                "transcribe-done",
+                {
+                    "duration_seconds": job_data.get("duration"),
+                    "segment_count": len(job_data["results"]),
+                },
+            )
+        except Exception as error:  # pylint: disable=broad-except
+            log_message(f"Error in transcription job {job_id}: {error}")
+            job_data["error"] = "אירעה שגיאה בתהליך התמלול."
+            job_data["status"] = "error"
+            job_data["progress"] = 1.0
+            capture_event(job_id, "transcribe-failed", {"error": str(error)})
+        finally:
+            cleanup_temp_file(job_id)
+            current_job_id = None
+            cleanup_finished_jobs()
 
 
 @app.get("/")
 async def index(request: Request):
-    if in_dev:
-        user_email = args.dev_user_email or os.environ.get("TS_USER_EMAIL", "dev@example.com")
-        session_id = set_user_email(request, user_email)
-        response = templates.TemplateResponse("index.html", {"request": request})
-        response.set_cookie(key="session_id", value=session_id, httponly=True, secure=not in_dev)
-        return response
-
-    user_email = get_user_email(request)
-    if not user_email:
-        return RedirectResponse(url="/login")
-
     if in_hiatus_mode:
         return templates.TemplateResponse("server-down.html", {"request": request})
-    
     return templates.TemplateResponse("index.html", {"request": request})
 
 
-
-
-@app.get("/login")
-async def login(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request, "google_analytics_tag": os.environ["GOOGLE_ANALYTICS_TAG"]})
-
-@app.get("/authorize")
-async def authorize(request: Request):
-    """Redirect to Google OAuth"""
-    # Generate state parameter for security
-    state = str(uuid.uuid4())
-    session_id = get_session_id(request)
-    
-    if session_id not in sessions:
-        sessions[session_id] = {}
-    sessions[session_id]["oauth_state"] = state
-    
-    # Build Google OAuth URL using v2 endpoints
-    params = {
-        "client_id": GOOGLE_CLIENT_ID,
-        "response_type": "code",
-        "redirect_uri": GOOGLE_REDIRECT_URI,
-        "scope": "openid email profile",
-        "access_type": "offline",
-        "prompt": "consent",
-        "state": state
-    }
-    auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urlencode(params)}"
-    
-    response = RedirectResponse(url=auth_url)
-    response.set_cookie(key="session_id", value=session_id, httponly=True, secure=not in_dev)
-    return response
-
-async def get_max_serverless_concurrency(api_key: str) -> Optional[int]:
-    """Get maximum serverless concurrency from RunPod"""
-    GRAPHQL_URL = "https://api.runpod.io/graphql"
-    GRAPHQL_HEADERS = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
-    
-    query = """
-    query {
-        myself {
-            maxServerlessConcurrency
-        }
-    }
-    """
-    
-    try:
-        timeout = aiohttp.ClientTimeout(total=10.0)
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.post(
-                GRAPHQL_URL, 
-                headers=GRAPHQL_HEADERS, 
-                json={"query": query}
-            ) as response:
-                response.raise_for_status()
-                
-                data = await response.json()
-                if "errors" in data:
-                    logger.error(f"GraphQL Error: {data['errors']}")
-                    return None
-                    
-                max_concurrency = data["data"]["myself"]["maxServerlessConcurrency"]
-                log_message(f"Max serverless concurrency: {max_concurrency}")
-                return max_concurrency
-            
-    except aiohttp.ClientError as e:
-        logger.error(f"Error fetching max serverless concurrency: {e}")
-        return None
-
-async def get_current_worker_usage(api_key: str) -> Optional[int]:
-    """Get current worker usage by summing workersMax from all endpoints"""
-    GRAPHQL_URL = "https://api.runpod.io/graphql"
-    GRAPHQL_HEADERS = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
-    
-    query = """
-    query Endpoints {
-        myself {
-            endpoints {
-                id
-                name
-                workersMax
-                workersMin
-                pods {
-                    desiredStatus
-                }
-                scalerType
-                scalerValue
-                templateId
-            }
-        }
-    }
-    """
-    
-    try:
-        timeout = aiohttp.ClientTimeout(total=10.0)
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.post(
-                GRAPHQL_URL, 
-                headers=GRAPHQL_HEADERS, 
-                json={"query": query}
-            ) as response:
-                response.raise_for_status()
-                
-                data = await response.json()
-                if "errors" in data:
-                    logger.error(f"GraphQL Error: {data['errors']}")
-                    return None
-                    
-                endpoints = data["data"]["myself"]["endpoints"]
-                total_workers = sum(endpoint.get("workersMax", 0) for endpoint in endpoints)
-                log_message(f"Current total worker usage across {len(endpoints)} endpoints: {total_workers}")
-                
-                # Log individual endpoint details for debugging
-                for endpoint in endpoints:
-                    log_message(f"Endpoint {endpoint['name']}: workersMax={endpoint.get('workersMax', 0)}")
-                
-                return total_workers
-            
-    except aiohttp.ClientError as e:
-        logger.error(f"Error fetching current worker usage: {e}")
-        return None
-
-async def check_runpod_balance(api_key: str) -> Optional[dict]:
-    """Check RunPod balance using GraphQL API"""
-    GRAPHQL_URL = "https://api.runpod.io/graphql"
-    GRAPHQL_HEADERS = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
-    
-    query = """
-    query {
-        myself {
-            clientBalance
-            currentSpendPerHr
-            spendLimit
-        }
-    }
-    """
-    
-    try:
-        timeout = aiohttp.ClientTimeout(total=10.0)
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.post(
-                GRAPHQL_URL, 
-                headers=GRAPHQL_HEADERS, 
-                json={"query": query}
-            ) as response:
-                response.raise_for_status()
-                
-                data = await response.json()
-                if "errors" in data:
-                    logger.error(f"GraphQL Error: {data['errors']}")
-                    return None
-                    
-                balance_info = data["data"]["myself"]
-                return {
-                    "clientBalance": balance_info.get('clientBalance', 'N/A'),
-                    "currentSpendPerHr": balance_info.get('currentSpendPerHr', 'N/A'),
-                    "spendLimit": balance_info.get('spendLimit', 'N/A')
-                }
-            
-    except aiohttp.ClientError as e:
-        logger.error(f"Error checking RunPod balance: {e}")
-        return None
-
-async def find_runpod_endpoint(api_key: str) -> Optional[dict]:
-    """Find autogenerated endpoint with full details including template ID using GraphQL API"""
-    GRAPHQL_URL = "https://api.runpod.io/graphql"
-    GRAPHQL_HEADERS = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
-    
-    query = """
-    query {
-        myself {
-            endpoints {
-                id
-                name
-                templateId
-                gpuIds
-                workersMin
-                workersMax
-                idleTimeout
-                scalerType
-                scalerValue
-            }
-        }
-    }
-    """
-    
-    try:
-        timeout = aiohttp.ClientTimeout(total=10.0)
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.post(
-                GRAPHQL_URL, 
-                headers=GRAPHQL_HEADERS, 
-                json={"query": query}
-            ) as response:
-                response.raise_for_status()
-                
-                data = await response.json()
-                if "errors" in data:
-                    logger.error(f"GraphQL Error: {data['errors']}")
-                    return None
-                    
-                endpoints = data["data"]["myself"]["endpoints"]
-                
-                # Look for endpoints matching the pattern autogenerated-endpoint-transcribe-ivrit-ai-*
-                pattern_regex = r"autogenerated-endpoint-transcribe-ivrit-ai-\d{8}"
-                for endpoint in endpoints:
-                    log_message(f"Endpoint: {endpoint['name']}")
-                    if re.match(pattern_regex, endpoint["name"]):
-                        log_message(f"Found endpoint: {endpoint['id']} ({endpoint['name']}) with template {endpoint['templateId']}")
-                        return {
-                            "id": endpoint["id"], 
-                            "name": endpoint["name"],
-                            "templateId": endpoint["templateId"],
-                            "gpuIds": endpoint["gpuIds"],
-                            "workersMin": endpoint["workersMin"],
-                            "workersMax": endpoint["workersMax"],
-                            "idleTimeout": endpoint["idleTimeout"],
-                            "scalerType": endpoint["scalerType"],
-                            "scalerValue": endpoint["scalerValue"]
-                        }
-                
-                logger.warning("No autogenerated endpoints found")
-                return None
-            
-    except aiohttp.ClientError as e:
-        logger.error(f"Error finding autogenerated endpoint: {e}")
-        return None
-
-async def delete_runpod_endpoint(api_key: str, endpoint_id: str) -> bool:
-    """Delete an endpoint using REST API"""
-    REST_URL = "https://rest.runpod.io/v1"
-    REST_HEADERS = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
-    
-    try:
-        timeout = aiohttp.ClientTimeout(total=30.0)
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.delete(
-                f"{REST_URL}/endpoints/{endpoint_id}",
-                headers=REST_HEADERS
-            ) as response:
-                response.raise_for_status()
-                
-                log_message(f"Successfully deleted endpoint: {endpoint_id}")
-                return True
-            
-    except aiohttp.ClientError as e:
-        logger.error(f"Error deleting endpoint {endpoint_id}: {e}")
-        return False
-
-async def create_runpod_endpoint(api_key: str, template_id: str) -> Optional[dict]:
-    """Create a new autogenerated endpoint using REST API with dynamic worker limits"""
-    REST_URL = "https://rest.runpod.io/v1"
-    REST_HEADERS = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {api_key}"
-    }
-    
-    # Generate date-based name
-    current_date = datetime.now().strftime("%Y%m%d")
-    endpoint_name = f"autogenerated-endpoint-transcribe-ivrit-ai-{current_date}"
-    
-    # Get maximum concurrency and current usage
-    max_concurrency = await get_max_serverless_concurrency(api_key)
-    current_usage = await get_current_worker_usage(api_key)
-    
-    if max_concurrency is None or current_usage is None:
-        logger.warning("Failed to fetch concurrency limits, using default workersMax=2")
-        workers_max = 2
-    else:
-        # Calculate available workers
-        available_workers = max_concurrency - current_usage
-        
-        # Check if no workers are available
-        if available_workers <= 0:
-            logger.error(f"No workers available: max={max_concurrency}, current={current_usage}, available={available_workers}")
-            return None
-        
-        # Use minimum of available workers and a reasonable default (e.g., 3)
-        workers_max = min(available_workers, 3)
-        log_message(f"Concurrency calculation: max={max_concurrency}, current={current_usage}, available={available_workers}, setting workersMax={workers_max}")
-    
-    endpoint_data = {
-        "name": endpoint_name,
-        "templateId": template_id,
-        "gpuTypeIds": ["NVIDIA GeForce RTX 4090"],
-        "scalerType": "QUEUE_DELAY",
-        "scalerValue": 4,
-        "workersMin": 0,
-        "workersMax": workers_max,
-        "idleTimeout": 5,
-        "executionTimeoutMs": EXECUTION_TIMEOUT_MS
-    }
-    
-    try:
-        timeout = aiohttp.ClientTimeout(total=30.0)
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.post(
-                f"{REST_URL}/endpoints",
-                headers=REST_HEADERS,
-                json=endpoint_data
-            ) as response:
-                response.raise_for_status()
-                
-                result = await response.json()
-                endpoint_id = result.get('id')
-                
-                log_message(f"Created autogenerated endpoint: {endpoint_id} ({endpoint_name})")
-                return {
-                    "id": endpoint_id,
-                    "name": endpoint_name,
-                    "status": result.get('status', 'N/A')
-                }
-            
-    except aiohttp.ClientError as e:
-        logger.error(f"Error creating autogenerated endpoint: {e}")
-        return None
-
-@app.get("/balance")
-async def get_balance(request: Request, runpod_token: str = None):
-    """Get RunPod balance for the provided credentials"""
-    if not runpod_token:
-        return JSONResponse({"error": "Missing RunPod token"}, status_code=400)
-    
-    balance_info = await check_runpod_balance(runpod_token)
-    if balance_info is None:
-        return JSONResponse({"error": "Failed to fetch balance"}, status_code=500)
-    
-    return JSONResponse(balance_info)
-
-async def check_runpod_endpoint(runpod_token: str) -> dict:
-    """
-    Check for autogenerated endpoint, validate template ID, and recreate if needed.
-    Returns a dictionary with action, endpoint info, and whether a wait is needed.
-    """
-    try:
-        # Get the required template ID from environment
-        required_template_id = os.environ.get("RUNPOD_TEMPLATE_ID")
-        if not required_template_id:
-            return {"success": False, "error": "RUNPOD_TEMPLATE_ID environment variable not set"}
-        
-        # Check if endpoint exists with full details
-        endpoint_info = await find_runpod_endpoint(runpod_token)
-        
-        if endpoint_info:
-            # Endpoint found, check if template ID matches
-            current_template_id = endpoint_info.get("templateId")
-            
-            if current_template_id == required_template_id:
-                # Template ID matches - endpoint is up to date
-                return {
-                    "success": True,
-                    "action": "up_to_date",
-                    "endpoint_id": endpoint_info["id"],
-                    "endpoint_name": endpoint_info["name"],
-                    "template_id": current_template_id,
-                    "needs_wait": False
-                }
-            else:
-                # Template ID doesn't match - delete and recreate
-                log_message(f"Template ID mismatch: current={current_template_id}, required={required_template_id}")
-                
-                # Delete the existing endpoint
-                delete_success = await delete_runpod_endpoint(runpod_token, endpoint_info["id"])
-                if not delete_success:
-                    log_message(f"Failed to delete endpoint {endpoint_info['id']}, but proceeding with creation")
-                
-                # Create new endpoint with correct template
-                new_endpoint = await create_runpod_endpoint(runpod_token, required_template_id)
-                
-                if new_endpoint:
-                    return {
-                        "success": True,
-                        "action": "updated",
-                        "endpoint_id": new_endpoint["id"],
-                        "endpoint_name": new_endpoint["name"],
-                        "old_template_id": current_template_id,
-                        "new_template_id": required_template_id,
-                        "status": new_endpoint["status"],
-                        "needs_wait": True
-                    }
-                else:
-                    return {"success": False, "error": "Failed to create updated endpoint - no workers available or concurrency limit reached"}
-        else:
-            # No endpoint found - create a new one
-            new_endpoint = await create_runpod_endpoint(runpod_token, required_template_id)
-            
-            if new_endpoint:
-                return {
-                    "success": True,
-                    "action": "created",
-                    "endpoint_id": new_endpoint["id"],
-                    "endpoint_name": new_endpoint["name"],
-                    "template_id": required_template_id,
-                    "status": new_endpoint["status"],
-                    "needs_wait": True
-                }
-            else:
-                return {"success": False, "error": "Failed to create endpoint - no workers available or concurrency limit reached"}
-            
-    except Exception as e:
-        logger.error(f"Error in check_runpod_endpoint: {e}")
-        return {"success": False, "error": "Internal server error"}
-
-
-@app.post("/check_endpoint")
-async def check_endpoint(request: Request):
-    """Check for autogenerated endpoint, validate template ID, and recreate if needed"""
-    try:
-        body = await request.json()
-        runpod_token = body.get("runpod_token")
-        
-        if not runpod_token:
-            return JSONResponse({"error": "Missing RunPod token"}, status_code=400)
-        
-        result = await check_runpod_endpoint(runpod_token)
-        
-        if result["success"]:
-            return JSONResponse(result)
-        else:
-            return JSONResponse({"error": result["error"]}, status_code=500)
-            
-    except Exception as e:
-        logger.error(f"Error in check_endpoint: {e}")
-        return JSONResponse({"error": "Internal server error"}, status_code=500)
-
-@app.get("/login/authorized")
-async def authorized(request: Request, code: str = None, state: str = None, error: str = None):
-    """Handle Google OAuth callback"""
-    if error:
-        error_message = f"Access denied: {error}"
-        return templates.TemplateResponse("close_window.html", {"request": request, "success": False, "message": error_message})
-    
-    if not code or not state:
-        error_message = "Missing authorization code or state"
-        return templates.TemplateResponse("close_window.html", {"request": request, "success": False, "message": error_message})
-    
-    # Verify state parameter
-    session_id = get_session_id(request)
-    if state != sessions.get(session_id, {}).get("oauth_state"):
-        error_message = "Invalid state parameter"
-        return templates.TemplateResponse("close_window.html", {"request": request, "success": False, "message": error_message})
-    
-    try:
-        # Exchange code for access token using v2 endpoint
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                "https://oauth2.googleapis.com/token",
-                data={
-                    "code": code,
-                    "client_id": GOOGLE_CLIENT_ID,
-                    "client_secret": GOOGLE_CLIENT_SECRET,
-                    "redirect_uri": GOOGLE_REDIRECT_URI,
-                    "grant_type": "authorization_code",
-                }
-            ) as token_response:
-                token_data = await token_response.json()
-                
-                if "error" in token_data:
-                    error_message = f"Token exchange failed: {token_data.get('error_description', 'Unknown error')}"
-                    return templates.TemplateResponse("close_window.html", {"request": request, "success": False, "message": error_message})
-                
-                access_token = token_data["access_token"]
-                
-                # Get user info using v2 endpoint
-                async with session.get(
-                    "https://www.googleapis.com/oauth2/v2/userinfo",
-                    headers={"Authorization": f"Bearer {access_token}"}
-                ) as user_response:
-                    user_data = await user_response.json()
-                    
-                    # Store user email in session
-                    set_user_email(request, user_data["email"])
-                    
-                    # Clean up OAuth state
-                    if session_id in sessions:
-                        sessions[session_id].pop("oauth_state", None)
-                    
-                    response = templates.TemplateResponse("close_window.html", {"request": request, "success": True})
-                    response.set_cookie(key="session_id", value=session_id, httponly=True, secure=not in_dev)
-                    return response
-            
-    except Exception as e:
-        error_message = f"Authentication failed: {str(e)}"
-        return templates.TemplateResponse("close_window.html", {"request": request, "success": False, "message": error_message})
-
-
 @app.post("/upload")
-async def upload_file(
-    request: Request,
-    file: UploadFile = File(...),
-    runpod_token: Optional[str] = Form(None),
-):
-    job_id = str(uuid.uuid4())
-    user_email = get_user_email(request)
+async def upload_file(request: Request, file: UploadFile = File(...)):
+    cleanup_finished_jobs()
 
+    job_id = str(uuid.uuid4())
     if in_hiatus_mode:
-        capture_event(job_id, "file-upload-hiatus-rejected", {"user": user_email})
+        capture_event(job_id, "file-upload-hiatus-rejected")
         return JSONResponse({"error": "השירות כרגע לא פעיל. אנא נסה שוב מאוחר יותר."}, status_code=503)
 
-    capture_event(job_id, "file-upload", {"user": user_email})
-
-    if not file:
-        return JSONResponse({"error": "לא נבחר קובץ. אנא בחר קובץ להעלאה."}, status_code=200)
-
-    if file.filename == "":
-        return JSONResponse({"error": "שם הקובץ ריק. אנא בחר קובץ תקין."}, status_code=200)
+    if not file or not file.filename:
+        return JSONResponse({"error": "לא נבחר קובץ. אנא בחר קובץ להעלאה."}, status_code=400)
 
     filename = secure_filename(file.filename)
+    capture_event(job_id, "file-upload", {"filename": filename})
 
+    content_length = request.headers.get("content-length")
+    if content_length and int(content_length) > MAX_FILE_SIZE_BYTES:
+        return JSONResponse(
+            {
+                "error": f"הקובץ גדול מדי. הגודל המקסימלי המותר הוא {human_readable_size(MAX_FILE_SIZE_BYTES)}."
+            },
+            status_code=400,
+        )
 
-    # Get RunPod token early to determine file size limits
-    runpod_token = runpod_token.strip() if runpod_token else ""
-    has_private_credentials = bool(runpod_token)
-    
-    # Define file size limits
-    MAX_FILE_SIZE_REGULAR = 300 * 1024 * 1024  # 300MB
-    MAX_FILE_SIZE_PRIVATE = 3 * 1024 * 1024 * 1024  # 3GB
-    CHUNK_SIZE = 50 * 1024 * 1024  # 50MB chunks
-    
-    max_file_size = MAX_FILE_SIZE_PRIVATE if has_private_credentials else MAX_FILE_SIZE_REGULAR
-    max_file_size_text = "3GB" if has_private_credentials else "300MB"
+    temp = tempfile.NamedTemporaryFile(delete=False)
+    temp_path = temp.name
+    temp.close()
 
-    # Check content-length header before reading file to validate size early
-    content_length = None
-    if 'content-length' in request.headers:
-        try:
-            content_length = int(request.headers['content-length'])
-        except (ValueError, TypeError):
-            pass
-
-    if content_length is not None and content_length > max_file_size:
-        return JSONResponse({"error": f"הקובץ גדול מדי. הגודל המקסימלי המותר הוא {max_file_size_text}."}, status_code=400)
-
-    # Create a temporary file
-    temp_file = tempfile.NamedTemporaryFile(delete=False)
-    temp_file_path = temp_file.name
-
+    total_size = 0
     try:
-        # Read file content in chunks to avoid memory overload
-        total_size = 0
-        with open(temp_file_path, 'wb') as f:
-            while chunk := await file.read(CHUNK_SIZE):
+        with open(temp_path, "wb") as buffer:
+            while chunk := await file.read(FILE_CHUNK_SIZE):
                 total_size += len(chunk)
-                if total_size > max_file_size:
-                    os.unlink(temp_file_path)
-                    return JSONResponse({"error": f"הקובץ גדול מדי. הגודל המקסימלי המותר הוא {max_file_size_text}."}, status_code=400)
-                f.write(chunk)
-        
-        file_size = total_size
-    except Exception as e:
-        # Clean up temp file if it exists
-        if os.path.exists(temp_file_path):
-            os.unlink(temp_file_path)
-        return JSONResponse({"error": f"העלאת הקובץ נכשלה: {str(e)}"}, status_code=200)
+                if total_size > MAX_FILE_SIZE_BYTES:
+                    os.unlink(temp_path)
+                    return JSONResponse(
+                        {
+                            "error": f"הקובץ גדול מדי. הגודל המקסימלי המותר הוא {human_readable_size(MAX_FILE_SIZE_BYTES)}."
+                        },
+                        status_code=400,
+                    )
+                buffer.write(chunk)
+    except Exception as error:  # pylint: disable=broad-except
+        if os.path.exists(temp_path):
+            os.unlink(temp_path)
+        log_message(f"File upload failed: {error}")
+        return JSONResponse({"error": "העלאת הקובץ נכשלה. אנא נסה שוב."}, status_code=500)
+    finally:
+        await file.close()
 
-    # Get the MIME type of the file
-    filetype = magic.Magic(mime=True).from_file(temp_file_path)
-
+    filetype = magic.Magic(mime=True).from_file(temp_path)
     if not is_ffmpeg_supported_mimetype(filetype):
-        return JSONResponse({"error": f"סוג הקובץ {filetype} אינו נתמך. אנא העלה קובץ אודיו או וידאו תקין."}, status_code=200)
+        os.unlink(temp_path)
+        return JSONResponse(
+            {"error": f"סוג הקובץ {filetype} אינו נתמך. אנא העלה קובץ אודיו או וידאו תקין."},
+            status_code=400,
+        )
 
-    # Get the duration of the audio file
-    duration = get_media_duration(temp_file_path)
-
+    duration = get_media_duration(temp_path)
     if duration is None:
-        return JSONResponse({"error": "לא ניתן לקרוא את משך הקובץ. אנא ודא שהקובץ תקין ונסה שוב."}, status_code=200)
+        os.unlink(temp_path)
+        return JSONResponse(
+            {"error": "לא ניתן לקרוא את משך הקובץ. אנא ודא שהקובץ תקין ונסה שוב."},
+            status_code=400,
+        )
 
-    # Check if audio duration exceeds maximum allowed duration
-    max_duration_seconds = MAX_AUDIO_DURATION_IN_HOURS * 3600
-    if duration > max_duration_seconds:
-        cleanup_temp_file(job_id)
-        return JSONResponse({"error": f"הקובץ ארוך מדי. המשך המקסימלי המותר הוא {MAX_AUDIO_DURATION_IN_HOURS} שעות ({max_duration_seconds/3600:.1f} שעות), אך הקובץ שלך הוא {duration/3600:.1f} שעות."}, status_code=400)
+    if duration > MAX_AUDIO_DURATION_IN_HOURS * 3600:
+        os.unlink(temp_path)
+        return JSONResponse(
+            {
+                "error": f"הקובץ ארוך מדי. המשך המקסימלי המותר הוא {MAX_AUDIO_DURATION_IN_HOURS:.1f} שעות."
+            },
+            status_code=400,
+        )
 
-    # Store the temporary file path
-    temp_files[job_id] = temp_file_path
-    
-    # If using custom RunPod credentials, check endpoint status
-    if runpod_token:
-        endpoint_result = await check_runpod_endpoint(runpod_token)
-        if not endpoint_result["success"]:
-            cleanup_temp_file(job_id)
-            return JSONResponse({"error": f"שגיאה בבדיקת ה-endpoint: {endpoint_result['error']}"}, status_code=400)
-        
-        if endpoint_result.get("needs_wait", False):
-            cleanup_temp_file(job_id)
-            action = endpoint_result.get("action", "updated")
-            if action == "created":
-                message = "נוצר endpoint חדש עבור המפתח שלך. אנא המתן 3 דקות לפני העלאת קבצים."
-            else:  # updated
-                message = "ה-endpoint שלך עודכן. אנא המתן 3 דקות לפני העלאת קבצים."
-            return JSONResponse({"error": message}, status_code=400)
+    temp_files[job_id] = temp_path
 
-    # Use the background event loop to call the async function
-    queued, res = await queue_job(job_id, user_email, filename, duration, runpod_token)
-    if queued:
-        job_results[job_id] = {"results": [], "completion_time": None, "progress": 0}
-    else:
-        cleanup_temp_file(job_id)
+    job_results[job_id] = {
+        "id": job_id,
+        "filename": filename,
+        "created_at": datetime.now(),
+        "start_time": None,
+        "completion_time": None,
+        "duration": duration,
+        "progress": 0.0,
+        "status": "queued",
+        "results": [],
+        "text": "",
+        "error": None,
+    }
 
-    return res
+    pending_jobs.append(job_id)
+    capture_event(job_id, "job-queued", {"queue_size": len(pending_jobs)})
+
+    asyncio.create_task(transcribe_job(job_id))
+
+    return JSONResponse({"job_id": job_id})
 
 
 @app.get("/job_status/{job_id}")
-async def job_status(job_id: str, request: Request):
-    # Make sure the job has been queued
-    if job_id not in job_results:
+async def job_status(job_id: str):
+    job_data = job_results.get(job_id)
+    if not job_data:
         return JSONResponse({"error": "מזהה העבודה אינו תקין. אנא נסה להעלות את הקובץ מחדש."}, status_code=400)
 
-    # Update last access time for the job
-    job_last_accessed[job_id] = time.time()
+    if job_data.get("error"):
+        error_message = job_data["error"]
+        job_results.pop(job_id, None)
+        return JSONResponse({"error": error_message}, status_code=500)
 
-    # Check if the job is in the queue
-    queue_position = None
-    job_type = None
-    queue_to_use = None
-
-    # Check all queues for the job
-    for queue_type in [SHORT, LONG, PRIVATE]:
-        for idx, job_desc in enumerate(queues[queue_type].queue):
-            if job_desc.id == job_id:
-                queue_position = idx + 1
-                job_type = queue_type
-                queue_to_use = queues[queue_type]
-                break
-        if queue_position:
-            break
-
-    if queue_position:
-        running_jobs_to_check = running_jobs[job_type]
-        # Use the background event loop to call the async function
-        time_ahead_str = await calculate_queue_time(queue_to_use, running_jobs_to_check)
-        return JSONResponse({"queue_position": queue_position, "time_ahead": time_ahead_str, "job_type": job_type})
-
-    # Check if job is running and update progress
-    for queue_type in [SHORT, LONG, PRIVATE]:
-        if job_id in running_jobs[queue_type]:
-            if job_results[job_id]["progress"] == 1.0:
-                return JSONResponse({"progress": job_results[job_id]["progress"]})
-
-            job_desc = running_jobs[queue_type][job_id]
-            # Calculate progress based on elapsed time with speedup factor of 15
-            if hasattr(job_desc, 'transcribe_start_time'):
-                elapsed_time = time.time() - job_desc.transcribe_start_time
-                estimated_total_time = job_desc.duration / 15  # Speedup factor of 15
-                progress = min(elapsed_time / estimated_total_time, 0.99)  # Cap at 1.0
-                job_results[job_id]["progress"] = progress
-            break
-    
-    # If job is in progress, return only the progress
-
-    # If job is complete, return the full job_result data
-    result = job_results[job_id].copy()
-    # Convert datetime to ISO string for JSON serialization
-    if result["completion_time"]:
-        result["completion_time"] = result["completion_time"].isoformat()
-    return JSONResponse(result)
-
-
-def cleanup_temp_file(job_id):
-    if job_id in temp_files:
-        temp_file_path = temp_files[job_id]
-        try:
-            os.unlink(temp_file_path)
-        except Exception as e:
-            log_message(f"Error deleting temporary file: {str(e)}")
-        finally:
-            del temp_files[job_id]
-
-
-def clean_some_unicode_from_text(text):
-    chars_to_remove = "\u061C"  # Arabic letter mark
-    chars_to_remove += "\u200B\u200C\u200D"  # Zero-width space, non-joiner, joiner
-    chars_to_remove += "\u200E\u200F"  # LTR and RTL marks
-    chars_to_remove += "\u202A\u202B\u202C\u202D\u202E"  # LTR/RTL embedding, pop, override
-    chars_to_remove += "\u2066\u2067\u2068\u2069"  # Isolate controls
-    chars_to_remove += "\uFEFF"  # Zero-width no-break space
-
-    return text.translate({ord(c): None for c in chars_to_remove})
-
-
-@app.get("/download/{job_id}")
-async def download_file(job_id: str, request: Request):
-    if job_id not in temp_files:
-        return JSONResponse({"error": "File not found"}, status_code=404)
-
-    return FileResponse(temp_files[job_id])
-
-
-
-
-
-async def process_segment(job_id, segment, duration):
-    """Process a single segment and update job results"""
-    # Check if the job should be terminated
-    if time.time() - job_last_accessed.get(job_id, 0) > JOB_TIMEOUT:
-        log_message(f"Terminating inactive job: {job_id}")
-        return False
-
-    # Convert segment to dict using dataclasses.asdict
-    segment_dict = dataclasses.asdict(segment)
-    
-    # Clean text
-    segment_dict['text'] = clean_some_unicode_from_text(segment.text)
-    
-    # Clean word text
-    for word in segment_dict['words']:
-        word['word'] = clean_some_unicode_from_text(word['word'])
-
-    # Progress calculation will be done in job_status endpoint
-    job_results[job_id]["results"].append(segment_dict)
-
-    return True
-
-
-async def transcribe_job(job_desc):
-    job_id = job_desc.id
-    segs = None
-
-    try:
-        log_message(f"{job_desc.user_email}: beginning transcription of {job_desc}, file name={job_desc.filename}")
-
-        temp_file_path = temp_files[job_id]
-        duration = job_desc.duration
-
-        # Consume quota only if not using custom RunPod credentials
-        if not job_desc.uses_custom_runpod:
-            user_bucket = get_user_quota(job_desc.user_email)
-            user_bucket.consume(duration)
-            remaining_minutes = user_bucket.get_remaining_minutes()
-            log_message(f"{job_desc.user_email}: consumed {duration/60:.1f} minutes from quota. Remaining: {remaining_minutes:.1f} minutes")
-        else:
-            log_message(f"{job_desc.user_email}: using custom RunPod credentials, skipping quota consumption")
-
-        transcribe_start_time = time.time()
-        # Store the start time in the job description for progress calculation
-        job_desc.transcribe_start_time = transcribe_start_time
-        capture_event(
-            job_id,
-            "transcribe-start",
-            {"user": job_desc.user_email, "queued_seconds": transcribe_start_time - job_desc.qtime, "job-type": job_desc.job_type, "custom-runpod": job_desc.uses_custom_runpod},
-        )
-
-        log_message(f"{job_desc.user_email}: job {job_desc} has a duration of {duration} seconds")
-
-        # Load model using ivrit package
-        # Pass custom RunPod credentials if provided
-        if job_desc.uses_custom_runpod:
-            api_key = job_desc.runpod_token
-            # Find the autogenerated endpoint
-            endpoint_info = await find_runpod_endpoint(api_key)
-            if not endpoint_info:
-                log_message(f"{job_desc.user_email}: failed to find autogenerated endpoint")
-                raise Exception("No autogenerated endpoint found for the provided API key")
-            endpoint_id = endpoint_info["id"]
-            log_message(f"{job_desc.user_email}: using custom RunPod credentials - found endpoint: {endpoint_id}")
-        else:
-            api_key = os.environ["RUNPOD_API_KEY"]
-            endpoint_id = os.environ["RUNPOD_ENDPOINT_ID"]
-            log_message(f"{job_desc.user_email}: using default RunPod credentials")
-
-        # Load model
-        m = ivrit.load_model(engine='runpod', model=MODEL_NAME, api_key=api_key, endpoint_id=endpoint_id, core_engine='stable-whisper')
-
-        # Process streaming results
-        try:
-            if in_dev:
-                # In dev mode, use the local file
-                segs = m.transcribe_async(path=temp_file_path, diarize=True)
-            else:
-                # In production mode, send file as URL
-                base_url = os.environ["BASE_URL"]
-                download_url = urljoin(base_url, f"/download/{job_id}")
-                segs = m.transcribe_async(url=download_url, diarize=True)
-
-            async for segment in segs:
-                if not await process_segment(job_id, segment, duration):
-                    # Job was terminated
-                    log_message(f"Terminating runpod job due to process_segment error.")
-                    return
-
-        except Exception as e:
-            log_message(f"Exception during transcription: {e}")
-            print(traceback.format_exc())
-            raise e
-        
-        log_message(f"{job_desc.user_email}: done transcribing job {job_id}, audio duration was {duration}.")
-
-        transcribe_done_time = time.time()
-        capture_event(
-            job_id,
-            "transcribe-done",
+    status = job_data.get("status")
+    if status == "queued":
+        position = None
+        if job_id in pending_jobs:
+            position = list(pending_jobs).index(job_id) + 1
+        return JSONResponse(
             {
-                "user": job_desc.user_email,
-                "transcription_seconds": transcribe_done_time - job_desc.transcribe_start_time,
-                "audio_duration_seconds": duration,
-                "job-type": job_desc.job_type,
-                "custom-runpod": job_desc.uses_custom_runpod,
-            },
+                "queue_position": position or 1,
+                "time_ahead": estimate_queue_eta(job_id),
+            }
         )
 
-        job_results[job_id]["progress"] = 1.0
-        job_results[job_id]["completion_time"] = datetime.now()
-    except Exception as e:
-        log_message(f"Error in transcription job {job_id}: {str(e)}")
-    finally:
-        # Close segs if it exists
-        #if segs:
-            #try:
-            #    segs.close()
-            #except Exception as e:
-            #    log_message(f"Failed to close runpod job: {e}")
-        
-        # Remove job from the appropriate running jobs dictionary
-        del running_jobs[job_desc.job_type][job_id]
-        # Remove job from user's active jobs
-        user_email = job_desc.user_email
-        if user_email in user_jobs and user_jobs[user_email] == job_id:
-            del user_jobs[user_email]
-        cleanup_temp_file(job_id)
-        # The job thread will terminate itself in the next iteration of the transcribe_job function
+    if status == "running":
+        progress = update_running_progress(job_data)
+        return JSONResponse({"progress": progress})
 
+    if status == "done":
+        response = {
+            "progress": 1.0,
+            "results": job_data.get("results", []),
+            "completion_time": job_data.get("completion_time").isoformat()
+            if job_data.get("completion_time")
+            else None,
+            "text": job_data.get("text", ""),
+        }
+        return JSONResponse(response)
 
-async def submit_next_task(job_queue, running_jobs, max_parallel_jobs, queue_type):
-    async with queue_locks[queue_type]:
-        # Submit all possible tasks until max_parallel_jobs are reached or queue is empty
-        while len(running_jobs) < max_parallel_jobs and not job_queue.empty():
-            job_desc = job_queue.get()
-            running_jobs[job_desc.id] = job_desc
-            # Create async task for transcription
-            asyncio.create_task(transcribe_job(job_desc))
+    return JSONResponse({"error": "העבודה נכשלה."}, status_code=500)
 
-
-async def cleanup_old_results():
-    current_time = datetime.now()
-    jobs_to_delete = []
-    for job_id, job_data in job_results.items():
-        if job_data["completion_time"] and (current_time - job_data["completion_time"]) > timedelta(minutes=30):
-            jobs_to_delete.append(job_id)
-
-    for job_id in jobs_to_delete:
-        del job_results[job_id]
-
-    # Clean up user buckets that are fully replenished
-    users_to_remove = []
-    for user_email, bucket in user_buckets.items():
-        # Remove bucket if it is fully replenished
-        if bucket.is_fully_replenished():
-            users_to_remove.append(user_email)
-    
-    for user_email in users_to_remove:
-        del user_buckets[user_email]
-
-
-async def terminate_inactive_jobs():
-    current_time = time.time()
-    jobs_to_terminate = []
-
-    # Check queued jobs in all queues.
-    # Running jobs are handled in transcribe_job.
-    for queue_type in [SHORT, LONG, PRIVATE]:
-        async with queue_locks[queue_type]:
-            queue_to_check = queues[queue_type]
-            for job in list(queue_to_check.queue):
-                if current_time - job_last_accessed.get(job.id, 0) > JOB_TIMEOUT:
-                    jobs_to_terminate.append(job.id)
-                    queue_to_check.queue.remove(job)
-
-    # Terminate and clean up jobs
-    for job_id in jobs_to_terminate:
-        log_message(f"Terminating inactive job: {job_id}")
-        if job_id in job_results:
-            del job_results[job_id]
-        if job_id in job_last_accessed:
-            del job_last_accessed[job_id]
-        cleanup_temp_file(job_id)
-
-        # Remove job from user's active jobs
-        for user_email, active_job_id in list(user_jobs.items()):
-            if active_job_id == job_id:
-                del user_jobs[user_email]
-
-        # The job thread will terminate itself in the next iteration of the transcribe_job function
-
-
-async def event_loop():
-    while True:
-        await submit_next_task(queues[SHORT], running_jobs[SHORT], max_parallel_jobs[SHORT], SHORT)
-        await submit_next_task(queues[LONG], running_jobs[LONG], max_parallel_jobs[LONG], LONG)
-        await submit_next_task(queues[PRIVATE], running_jobs[PRIVATE], max_parallel_jobs[PRIVATE], PRIVATE)
-        await cleanup_old_results()
-        await terminate_inactive_jobs()
-        await asyncio.sleep(0.1)
-
-
-# Global async resources
-queue_locks = {
-    SHORT: None,
-    LONG: None,
-    PRIVATE: None
-}
 
 if __name__ == "__main__":
     port = 4600 if in_dev else 4500

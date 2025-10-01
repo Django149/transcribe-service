@@ -1,4 +1,4 @@
-(function () {
+;(function () {
   const he = {
     title: "תמלול בעזרת ivrit.ai",
     themeToggle: "החלף מצב תאורה",
@@ -17,13 +17,6 @@
     donateAsk: "רוצים לתרום לנו?",
     privacyTos: "מדיניות פרטיות ותנאי שימוש",
     settingsHeader: "הגדרות",
-    settingsRunpod: "הגדרות RunPod",
-    runpodKeyLabel: "RunPod API Key:",
-    runpodKeyPlaceholder: "הכנס את ה-API Key שלך",
-    runpodHelpWatch: "לצפייה בסרטון הסבר",
-    runpodHelpText: "הזנת מפתח פרטי מאפשרת שימוש במשאבים פרטיים לעיבוד מהיר יותר.",
-    settingsWithRunpodSaved: "הגדרות (הגדרות RunPod שמורות)",
-    balanceLabel: "יתרה",
     loading: "טוען...",
     displaySettings: "הגדרות תצוגה",
     timestampsLabel: "קודי זמן:",
@@ -45,7 +38,6 @@
     fileRemovedSuccess: "קובץ הוסר בהצלחה",
     fileSelectedSuccess: "קובץ נבחר בהצלחה",
     fileTooLarge: "הקובץ גדול מדי. הגודל המקסימלי המותר הוא {size}",
-    usingRunpod: "משתמש בהגדרות RunPod מותאמות אישית...",
     uploading: "מעלה את הקובץ...",
     uploadingProgress: "מעלה את הקובץ... {progress}%",
     uploadedStarting: "קובץ הועלה. מתחיל בתמלול...",
@@ -55,25 +47,23 @@
     jobTypeShort: "קצרה",
     jobTypeLong: "ארוכה",
     jobTypePrivate: "פרטית",
-    waitingMsg: "בזמן שאתם ממתינים, אנו מזכירים ש-ivrit.ai הוא פרויקט ללא מטרות רווח.\nכל השירותים שלנו, כולל שירות התמלול בו אתם משתמשים כרגע, ניתנים בחינם.\n\nנודה אם תוכלו לתרום בכדי שנוכל להנגיש את השירות ליותר משתמשים.\n\nניתן לתרום דרך לינק לפטראון בתחתית המסך.\n\nתודה!",
+    waitingMsg:
+      "בזמן שאתם ממתינים, אנו מזכירים ש-ivrit.ai הוא פרויקט ללא מטרות רווח.\nכל השירותים שלנו, כולל שירות התמלול בו אתם משתמשים כרגע, ניתנים בחינם.\n\nנודה אם תוכלו לתרום בכדי שנוכל להנגיש את השירות ליותר משתמשים.\n\nניתן לתרום דרך לינק לפטראון בתחתית המסך.\n\nתודה!",
     transcribing: "מתמלל... {progress}%",
     statusError: "אירעה שגיאה בבדיקת סטטוס העבודה",
     verifyChecking: "בודק...",
-    runpodSettingsSaved: "הגדרות RunPod נשמרו בהצלחה",
-    runpodEndpointWait: "Endpoint חדש נוצר או עודכן. אנא המתן 3 דקות לפני העלאת קבצים.",
     settingsSaved: "הגדרות נשמרו בהצלחה",
     settingsCleared: "כל ההגדרות נמחקו בהצלחה",
     balanceLoadingError: "שגיאה בטעינה",
-    runpodServerConnError: "שגיאה: לא ניתן להתחבר לשרת RunPod.\nאנא בדוק את החיבור לאינטרנט ונסה שוב.",
-    runpodVerifyError: "שגיאה בבדיקת הגדרות RunPod.",
-    endpointCheckError: "שגיאה בבדיקת ה-endpoint:",
-    errorReportTemplate: "אם השגיאה נמשכת, אנא שלחו דיווח לכתובת info@ivrit.ai עם הפרטים הבאים:\n- כתובת האימייל שלכם\n- זמן השגיאה: {time}\n- פרטי השגיאה: {details}",
+    errorReportTemplate:
+      "אם השגיאה נמשכת, אנא שלחו דיווח לכתובת info@ivrit.ai עם הפרטים הבאים:\n- כתובת האימייל שלכם\n- זמן השגיאה: {time}\n- פרטי השגיאה: {details}",
     transcriptFooter: "תומלל באמצעות שירות התמלול של ivrit.ai",
     copySuccess: "הטקסט הועתק ללוח בהצלחה",
     docxLibMissing: "ספריית יצירת המסמך לא נטענה. בדקו את החיבור ונסו שוב.",
     docxCreateError: "שגיאה ביצירת קובץ Word. אנא נסה שוב.",
     exportError: "שגיאה בייצוא נתוני התמלול",
-    exitWarning: "התמלול עדיין פעיל. יציאה מהדף תפסיק את התמלול. האם אתה בטוח שברצונך לצאת?",
+    exitWarning:
+      "התמלול עדיין פעיל. יציאה מהדף תפסיק את התמלול. האם אתה בטוח שברצונך לצאת?",
     transcriptHeaderDocx: "תמלול",
     speaker: "דובר {num}",
     speakerUnknown: "דובר לא מזוהה",
@@ -88,7 +78,8 @@
     filesSelectedSuccess: "{count} קבצים נבחרו בהצלחה",
     batchStarting: "מתחיל עיבוד אצווה של {count} קבצים...",
     batchUploading: "מעלה {index}/{total}: {filename}",
-    batchQueued: "בתור ({index}/{total}) {filename} · מקום {position} · זמן משוער: {eta}",
+    batchQueued:
+      "בתור ({index}/{total}) {filename} · מקום {position} · זמן משוער: {eta}",
     batchTranscribing: "מתמלל ({index}/{total}) {filename} · {progress}%",
     batchDone: "האצווה הושלמה",
     docxDownloaded: "קובץ DOCX ירד: {filename}",
@@ -112,13 +103,6 @@
     donateAsk: "ווילט איר אונדז שטיצן?",
     privacyTos: "פּריוואַטקייט פּאָליסי און תנאי־ניצול",
     settingsHeader: "איינשטעלונגען",
-    settingsRunpod: "RunPod איינשטעלונגען",
-    runpodKeyLabel: "RunPod API קלעף:",
-    runpodKeyPlaceholder: "אַרײַנלייגן אייערן API קלעף",
-    runpodHelpWatch: "קוקן דערקלער־ווידעא",
-    runpodHelpText: "אַ פּערזענלעכער שליסל דערמעגלעכט שנעלערע באַהאַנדלונג אויף אייערע רעסורסן.",
-    settingsWithRunpodSaved: "איינשטעלונגען (RunPod־אויפֿהיטונגען אַנטהאַלטן)",
-    balanceLabel: "באַלאַנס",
     loading: "לאָדט...",
     displaySettings: "וויזועל־איינשטעלונגען",
     timestampsLabel: "צײַט־קאָדן:",
@@ -140,35 +124,34 @@
     fileRemovedSuccess: "טעקע איז געלאָשן געוואָרן מיט הצלחה",
     fileSelectedSuccess: "טעקע איז געראָטן אויסגעקליבן",
     fileTooLarge: "די טעקע איז צו גרויַס. מעגלעכער העכסטער איז {size}",
-    usingRunpod: "נוצט פּערזענלעכע RunPod איינשטעלונגען...",
     uploading: "אַרויפֿלאָדט די טעקע...",
     uploadingProgress: "אַרויפֿלאָדט די טעקע... {progress}%",
     uploadedStarting: "טעקע אַרויפֿגעלאָדן. הייבט אָן טראַנסקריפּציע...",
     uploadError: "א טעות בעת אַרויפֿלאָדן. ביטע פּרוּווט נאָך אַ מאָל.",
-    queuePosition: "אין דער ריי אָרט {position}. אַפּראָקס. אָנהייב־צײַט: {eta}",
+    queuePosition:
+      "אין דער ריי אָרט {position}. אַפּראָקס. אָנהייב־צײַט: {eta}",
     jobTypePrefix: "אַרבעט־סאָרט: {jobType}",
     jobTypeShort: "קורץ",
     jobTypeLong: "לאַנג",
     jobTypePrivate: "פּריוואַט",
-    waitingMsg: "ווען איר וואַרט, געדענקט אַז ivrit.ai איז אַ נאַן־פּראָפֿיט.\nאַלע אונדזערע דינען, אַרײַנגערעכנט דעם טראַנסקריפּציע־דינסט, זײַנען בחינם.\n\nביטע שטיצט אונדז כּדי צוצוגעבן דעם דינסט פאר מער ניצערס.\n\nמען קען שטיצן דורך פּאַטרעאָן לינק אונטן.\n\nאַ דאַנק!",
+    waitingMsg:
+      "ווען איר וואַרט, געדענקט אַז ivrit.ai איז אַ נאַן־פּראָפֿיט.\nאַלע אונדזערע דינען, אַרײַנגערעכנט דעם טראַנסקריפּציע־דינסט, זײַנען בחינם.\n\nביטע שטיצט אונדז כּדי צוצוגעבן דעם דינסט פאר מער ניצערס.\n\nמען קען שטיצן דורך פּאַטרעאָן לינק אונטן.\n\nאַ דאַנק!",
     transcribing: "טראַנסקריבירט... {progress}%",
     statusError: "א טעות בײַם קאָנטראָלירן אַרבעט־סטאַטוס",
     verifyChecking: "באַשטעטיקט...",
-    runpodSettingsSaved: "RunPod איינשטעלונגען געוואָרן געראַטעוועט",
-    runpodEndpointWait: "אַנדערש אַ נײַער/דערהײַנטיקער Endpoint. וואַרטט 3 מינוט פֿריִער",
     settingsSaved: "איינשטעלונגען געראַטעוועט",
     settingsCleared: "אַלע איינשטעלונגען ווערן געלייגט צוריק",
     balanceLoadingError: "טעות בײַם לאָדן",
-    runpodServerConnError: "טעות: מ׳קען זיך נישט פֿאַרבינדן צו RunPod סערוויר.\nביטע פּרוּווט ווידער.",
-    runpodVerifyError: "טעות בײַם באַשטעטיקן RunPod איינשטעלונגען.",
-    endpointCheckError: "טעות בײַם קאָנטראָלירן Endpoint:",
-    errorReportTemplate: "אויב דער טעות בלײַבט, ביטע שיקט אַ רעפּאָרט צו info@ivrit.ai מיט די דעטאַלן:\n- אייער אימעיל־אַדרעס\n- צײַט פֿון טעות: {time}\n- דעטאַלן: {details}",
+    errorReportTemplate:
+      "אויב דער טעות בלײַבט, ביטע שיקט אַ רעפּאָרט צו info@ivrit.ai מיט די דעטאַלן:\n- אייער אימעיל־אַדרעס\n- צײַט פֿון טעות: {time}\n- דעטאַלן: {details}",
     transcriptFooter: "טראַנסקריבירט דורך ivrit.ai'ס דינסט",
     copySuccess: "טעקסט איז קאַפּירט געוואָרן",
-    docxLibMissing: "די דאָקומענט־ביבליאָטעק איז נישט געלאָדן. פּרוּווט ווידער.",
+    docxLibMissing:
+      "די דאָקומענט־ביבליאָטעק איז נישט געלאָדן. פּרוּווט ווידער.",
     docxCreateError: "טעות בײַם שאַפֿן Word טעקע. פּרוּווט ווידער.",
     exportError: "טעות בײַם אַן־פיר פֿון טראַנסקריפּציע־דאַטן",
-    exitWarning: "טראַנסקריפּציע לויפֿט נאָך. אַרויסגיין וועט אָפּשטעלן. זענט איר זיכער?",
+    exitWarning:
+      "טראַנסקריפּציע לויפֿט נאָך. אַרויסגיין וועט אָפּשטעלן. זענט איר זיכער?",
     transcriptHeaderDocx: "טראַנסקריפּציע",
     speaker: "רעדנדיקער {num}",
     speakerUnknown: "ניט־ידענטיפֿיצירטער רעדנדיקער",
@@ -183,8 +166,10 @@
     filesSelectedSuccess: "{count} טעקעס געראָטן אויסגעקליבן",
     batchStarting: "הייבט אָן אַ באַטש פֿון {count} טעקעס...",
     batchUploading: "אַרויפֿלאָדט {index}/{total}: {filename}",
-    batchQueued: "אין ריי ({index}/{total}) {filename} · אָרט {position} · אַפּראָקס. {eta}",
-    batchTranscribing: "טראַנסקריבירט ({index}/{total}) {filename} · {progress}%",
+    batchQueued:
+      "אין ריי ({index}/{total}) {filename} · אָרט {position} · אַפּראָקס. {eta}",
+    batchTranscribing:
+      "טראַנסקריבירט ({index}/{total}) {filename} · {progress}%",
     batchDone: "באַטש פאַרענדיקט",
     docxDownloaded: "DOCX אַראָפּלאָדן: {filename}",
   }
@@ -207,13 +192,6 @@
     donateAsk: "Want to support us?",
     privacyTos: "Privacy Policy and Terms of Use",
     settingsHeader: "Settings",
-    settingsRunpod: "RunPod Settings",
-    runpodKeyLabel: "RunPod API Key:",
-    runpodKeyPlaceholder: "Enter your API Key",
-    runpodHelpWatch: "Watch tutorial video",
-    runpodHelpText: "Using a private key lets you use your private resources for faster processing.",
-    settingsWithRunpodSaved: "Settings (RunPod settings saved)",
-    balanceLabel: "Balance",
     loading: "Loading...",
     displaySettings: "Display settings",
     timestampsLabel: "Timestamps:",
@@ -235,7 +213,6 @@
     fileRemovedSuccess: "File removed successfully",
     fileSelectedSuccess: "File selected successfully",
     fileTooLarge: "File too large. Maximum allowed is {size}",
-    usingRunpod: "Using custom RunPod settings...",
     uploading: "Uploading file...",
     uploadingProgress: "Uploading file... {progress}%",
     uploadedStarting: "File uploaded. Starting transcription...",
@@ -245,25 +222,24 @@
     jobTypeShort: "short",
     jobTypeLong: "long",
     jobTypePrivate: "private",
-    waitingMsg: "While you wait, note ivrit.ai is a non-profit. All our services, including this transcription service, are free.\n\nPlease consider supporting us so we can make this service available to more users.\n\nYou can support via the Patreon link at the bottom of the page.\n\nThank you!",
+    waitingMsg:
+      "While you wait, note ivrit.ai is a non-profit. All our services, including this transcription service, are free.\n\nPlease consider supporting us so we can make this service available to more users.\n\nYou can support via the Patreon link at the bottom of the page.\n\nThank you!",
     transcribing: "Transcribing... {progress}%",
     statusError: "An error occurred while checking job status",
     verifyChecking: "Checking...",
-    runpodSettingsSaved: "RunPod settings saved",
-    runpodEndpointWait: "A new/updated endpoint is being prepared. Please wait 3 minutes before uploading.",
     settingsSaved: "Settings saved",
     settingsCleared: "All settings were cleared",
     balanceLoadingError: "Loading error",
-    runpodServerConnError: "Error: cannot connect to RunPod server. Please check your connection and try again.",
-    runpodVerifyError: "Error verifying RunPod settings.",
-    endpointCheckError: "Error checking endpoint:",
-    errorReportTemplate: "If the error persists, please email info@ivrit.ai with:\n- Your email address\n- Error time: {time}\n- Error details: {details}",
+    errorReportTemplate:
+      "If the error persists, please email info@ivrit.ai with:\n- Your email address\n- Error time: {time}\n- Error details: {details}",
     transcriptFooter: "Transcribed using ivrit.ai's transcription service",
     copySuccess: "Text copied to clipboard",
-    docxLibMissing: "Document library not loaded. Check connection and try again.",
+    docxLibMissing:
+      "Document library not loaded. Check connection and try again.",
     docxCreateError: "Error creating Word file. Please try again.",
     exportError: "Error exporting transcription data",
-    exitWarning: "Transcription is still running. Leaving will stop it. Are you sure you want to leave?",
+    exitWarning:
+      "Transcription is still running. Leaving will stop it. Are you sure you want to leave?",
     transcriptHeaderDocx: "Transcription",
     speaker: "Speaker {num}",
     speakerUnknown: "Unknown speaker",
@@ -278,8 +254,10 @@
     filesSelectedSuccess: "{count} files selected successfully",
     batchStarting: "Starting batch of {count} files...",
     batchUploading: "Uploading {index}/{total}: {filename}",
-    batchQueued: "Queued ({index}/{total}) {filename} · position {position} · ETA {eta}",
-    batchTranscribing: "Transcribing ({index}/{total}) {filename} · {progress}%",
+    batchQueued:
+      "Queued ({index}/{total}) {filename} · position {position} · ETA {eta}",
+    batchTranscribing:
+      "Transcribing ({index}/{total}) {filename} · {progress}%",
     batchDone: "Batch complete",
     docxDownloaded: "DOCX downloaded: {filename}",
   }
@@ -293,38 +271,46 @@
   }
 
   const I18N = {
-    current: 'he',
+    current: "he",
     setLanguage(lang) {
-      this.current = resources[lang] ? lang : 'he'
+      this.current = resources[lang] ? lang : "he"
       try {
-        localStorage.setItem('ui_lang', this.current)
+        localStorage.setItem("ui_lang", this.current)
       } catch {}
-      document.documentElement.setAttribute('lang', this.current)
-      const rtlLangs = ['he', 'yi']
-      document.documentElement.setAttribute('dir', rtlLangs.includes(this.current) ? 'rtl' : 'ltr')
+      document.documentElement.setAttribute("lang", this.current)
+      const rtlLangs = ["he", "yi"]
+      document.documentElement.setAttribute(
+        "dir",
+        rtlLangs.includes(this.current) ? "rtl" : "ltr"
+      )
     },
     t(key, vars) {
-      const langTable = resources[this.current] || resources['he']
-      const base = (langTable && langTable[key]) || (resources['he'] && resources['he'][key]) || key
+      const langTable = resources[this.current] || resources["he"]
+      const base =
+        (langTable && langTable[key]) ||
+        (resources["he"] && resources["he"][key]) ||
+        key
       return interpolate(base, vars)
     },
     apply() {
-      const langTable = resources[this.current] || resources['he']
-      try { document.title = this.t('title') } catch {}
-      document.querySelectorAll('[data-i18n]').forEach((el) => {
-        const key = el.getAttribute('data-i18n')
+      const langTable = resources[this.current] || resources["he"]
+      try {
+        document.title = this.t("title")
+      } catch {}
+      document.querySelectorAll("[data-i18n]").forEach((el) => {
+        const key = el.getAttribute("data-i18n")
         if (!key) return
         const val = this.t(key)
-        if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-          el.setAttribute('placeholder', val)
+        if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
+          el.setAttribute("placeholder", val)
         } else {
           el.textContent = val
         }
       })
-      document.querySelectorAll('[data-i18n-title]').forEach((el) => {
-        const key = el.getAttribute('data-i18n-title')
-        el.setAttribute('title', this.t(key))
-        el.setAttribute('aria-label', this.t(key))
+      document.querySelectorAll("[data-i18n-title]").forEach((el) => {
+        const key = el.getAttribute("data-i18n-title")
+        el.setAttribute("title", this.t(key))
+        el.setAttribute("aria-label", this.t(key))
       })
     },
   }
@@ -332,11 +318,9 @@
   window.I18N = I18N
   // Initialize language from storage or default
   try {
-    const saved = localStorage.getItem('ui_lang') || 'he'
+    const saved = localStorage.getItem("ui_lang") || "he"
     I18N.setLanguage(saved)
   } catch {
-    I18N.setLanguage('he')
+    I18N.setLanguage("he")
   }
 })()
-
-
